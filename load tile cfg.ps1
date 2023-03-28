@@ -7,12 +7,6 @@ $filepath = "C:\users\moorea\Desktop\DDA\Ultimate"
 
 function spliter($file,$width,$height,$StartRange,$endrange){
 
-#Write-host "spliter"
-#Write-host $file
-#Write-host $width
-#Write-host $height
-#Write-host $StartRange
-
 $baseimagepath = "C:\Users\moorea\desktop\DDA\Ultimate\" + $file
 $baseimage = [System.Drawing.Bitmap]::new($baseimagepath)
 $ImagesPerRow = $baseimage.Width / $width
@@ -51,7 +45,6 @@ $fileloops = $json.'tiles-new'.file.count
 #-2 to skip the fallback.
 for ($fileloop = 0; $fileloop -le $fileloops - 2; $fileloop++){
 
-
 if($json.'tiles-new'[$fileloop].sprite_width){$X = $json.'tiles-new'[$fileloop].sprite_width}
 else{$X = 32}
 
@@ -63,18 +56,13 @@ $m = Select-String -InputObject $json.'tiles-new'[$fileloop].'//' -Pattern "\d+"
 
 $file = $json.'tiles-new'[$fileloop].file
 write-host $file
-#write-host $startrange
-#write-host $endrange
 
 $GFXindex +=  spliter $file $x $y $StartRange $endrange
 
 }
 
-#$json.'tiles-new'[1].file #normal.png  
-#$json.'tiles-new'[1].'//' #range 1296 to 5967
 
 $imagesorce=@()
-#$fileloops = 3
 
 for ($fileloop = 0; $fileloop -le $fileloops - 2; $fileloop++){
 write-host $fileloop
@@ -83,10 +71,8 @@ Write-host $json.'tiles-new'[$fileloop].file
 $loops = $json.'tiles-new'[$fileloop].tiles.count
 
 for ($loop = 0; $loop -le $loops - 1; $loop++) {
-#Write-Host The value of Var is: $loop
 
 if ($json.'tiles-new'[$fileloop].tiles[$loop].id.GetType().name -eq "String"){
-
 
     if($json.'tiles-new'[$fileloop].tiles[$loop].fg.GetType().name -eq "Object[]"){
         if ($json.'tiles-new'[$fileloop].tiles[$loop].fg[0].sprite){$FG = $json.'tiles-new'[$fileloop].tiles[$loop].fg[0].sprite}
@@ -98,7 +84,6 @@ if ($json.'tiles-new'[$fileloop].tiles[$loop].id.GetType().name -eq "String"){
 if($null-eq $FG){$FG = 1296}
 
 $image = $json.'tiles-new'[$fileloop].tiles[$loop].id
-
 
 $temp = New-Object psobject -Property @{
                  
@@ -113,10 +98,6 @@ $temp = New-Object psobject -Property @{
         
 }
 $imagesorce += $temp
-  #write-host $json.'tiles-new'[$fileloop].tiles[$loop].id
-  #write-host $json.'tiles-new'[$fileloop].tiles[$loop].fg
-  #write-host $fg
-  #write-host $json.'tiles-new'[$fileloop].tiles[$loop].bg
 
 }
 else{
@@ -150,10 +131,7 @@ $temp = New-Object psobject -Property @{
         
 }
 $imagesorce += $temp
-  #write-host $json.'tiles-new'[$fileloop].tiles[$loop].id[$subloop]
-  #write-host $json.'tiles-new'[$fileloop].tiles[$loop].fg
-  #write-host $fg
-  #write-host $json.'tiles-new'[$fileloop].tiles[$loop].bg
+
 }
 }
 }

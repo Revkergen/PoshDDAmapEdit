@@ -1,10 +1,29 @@
-﻿
+﻿Add-Type -AssemblyName System.Drawing
+[void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
+
+
+
+
+Function load-mapfile{
+
+#clean up old map if loaded.
+
+$FileBrowser = New-Object System.Windows.Forms.OpenFileDialog
+$FileBrowser.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+$FileBrowser.Filter = 'Mapfiles (*.json) | *.json'
+
+#shows the box
+$null = $FileBrowser.ShowDialog()
+Write-host $FileBrowser.FileName
+
+
+}
+
 $file = "C:\users\moorea\Desktop\2storymodern01.json"
 $data = Get-Content -raw -path $file -Encoding UTF8
-[void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
 $json = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
 
-Add-Type -AssemblyName System.Drawing
+
 
 #find a pallete
 
@@ -115,7 +134,7 @@ $image = $json.object.fill_ter[0]
 #region palette.......... not a real palette, replace t_region with an real image.
 $file = "C:\Users\moorea\Desktop\DDA\regional_map_settings.json"
 $data = Get-Content -raw -path $file -Encoding UTF8
-[void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
+#[void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
 $RMSjson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
 
 #region terrain
@@ -470,10 +489,8 @@ $dir = Get-ChildItem "C:\users\moorea\desktop\DDA\Ultimate" -Filter *.png | %{$_
 foreach($i in $dir){
 #write-host $i
 
-If(!("tempvarname" + [io.path]::GetFileNameWithoutExtension($i))){
 $filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension($i)
-New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::new($i))
-}
+New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::new($i)) -ErrorAction SilentlyContinue
 
 #write-host "cache split name" $filename
 #$var = (Get-Variable -Name "$name").Value
@@ -481,7 +498,7 @@ New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::
 }
 
 $filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension("C:\Users\moorea\Desktop\DDA\Images\error.png")
-New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::new("C:\Users\moorea\Desktop\DDA\Images\error.png"))
+New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::new("C:\Users\moorea\Desktop\DDA\Images\error.png")) -ErrorAction SilentlyContinue
 
 
 #(Get-Variable).Name | write-host

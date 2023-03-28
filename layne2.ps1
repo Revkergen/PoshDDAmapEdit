@@ -1,6 +1,4 @@
-﻿#$tilesetfile = 'C:\users\moorea\Desktop\DDA\Tileset.csv'
-#$tilesetmap = import-csv $tilesetfile
-
+﻿
 $file = "C:\users\moorea\Desktop\2storymodern01.json"
 $data = Get-Content -raw -path $file -Encoding UTF8
 [void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
@@ -31,30 +29,14 @@ $collection=@()
 
 foreach ($collection in $palletejson.terrain.getenumerator())  {
 
-#write-host $collection
-#write-host " Collection space"
-
 foreach ($row in $collection.getenumerator())  {
 
-
 write-host $row
-#write-host "  spacer   "
 $image = "BLANK"
 $image = [system.String]::Join(" ", $row.Value)  -match "(?<image>t_\w+)" |   Foreach { $Matches.image }
 #$image = $row.Value.ToString() -match "(?<image>t_\w+)" | Foreach { $Matches.image }
 
 write-host $image
-#$Url = $null
-#ForEach($item in $tilesetmap){
-#write-host $item
-
-#    if($item.image -eq $image){$url = $item.url} 
-#else{$url = '<div class="icon-layer fg svelte-17io91a" style="width: 32px;height: 32px;background-image: url(https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/cdda-experimental-2023-02-08-2359/gfx/UltimateCataclysm/fallback.png);background-position: 0px -64px;transform: scale(1) translate(0px, 0px);"></div>'}
-
-#}
-#if($null -eq $url){$url = '<div class="icon-layer fg svelte-17io91a" style="width: 32px;height: 32px;background-image: url(https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/cdda-experimental-2023-02-14-0634/gfx/UltimateCataclysm/fallback.png);background-position: -160px -1088px;transform: scale(1) translate(0px, 0px);"></div>'}
-
-
 
 $tempPalette = New-Object psobject -Property @{
         key          = $row.Key
@@ -65,8 +47,6 @@ $tempPalette = New-Object psobject -Property @{
         file = $null
         x = $null
         y = $null
-
-
 
 }
 $Custompalette += $tempPalette
@@ -82,19 +62,9 @@ ForEach ($row in $collection.getenumerator()){
 write-host $row
     $image = $row.Value.ToString() -match "(?<image>t_\w+)" | Foreach { $Matches.image }
 
-    #write-host $image
-    #$Url = $null
-    #ForEach($item in $tilesetmap){
-    #write-host $item
-    
-    #    if($item.image -eq $image){$url = $item.url}  
-    #}
-    #if($null -eq $url){$url = '<div class="icon-layer fg svelte-17io91a" style="width: 32px;height: 32px;background-image: url(https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/cdda-experimental-2023-02-14-0634/gfx/UltimateCataclysm/fallback.png);background-position: -160px -1088px;transform: scale(1) translate(0px, 0px);"></div>'}
-      
     $tempPalette = New-Object psobject -Property @{
             key          = $row.Key
             image        = $image
-            #url          = $url
             width = $null
             height = $null
             file = $null
@@ -111,19 +81,9 @@ ForEach ($row in $collection.getenumerator()){
 write-host $row
     $image = $row.Value.ToString() -match "(?<image>f_\w+)" | Foreach { $Matches.image }
 
-    #write-host $image
-    #$Url = $null
-    #ForEach($item in $tilesetmap){
-    #write-host $item
-    
-    #    if($item.image -eq $image){$url = $item.url}  
-    #}
-    #if($null -eq $url){$url = '<div class="icon-layer fg svelte-17io91a" style="width: 32px;height: 32px;background-image: url(https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/cdda-experimental-2023-02-14-0634/gfx/UltimateCataclysm/fallback.png);background-position: -160px -1088px;transform: scale(1) translate(0px, 0px);"></div>'}
-      
     $tempPalette = New-Object psobject -Property @{
             key          = $row.Key
             image        = $image
-            #url          = $url
             width = $null
             height = $null
             file = $null
@@ -138,18 +98,10 @@ write-host $row
 #deal with blanks in the map       
 if ($json.object.fill_ter[0]){
 $image = $json.object.fill_ter[0]
-#$Url = $null
-#    ForEach($item in $tilesetmap){
-#    #write-host $item
-    
-#        if($item.image -eq $image){$url = $item.url}  
-#    }
-#    if($null -eq $url){$url = '<div class="icon-layer fg svelte-17io91a" style="width: 32px;height: 32px;background-image: url(https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/cdda-experimental-2023-02-14-0634/gfx/UltimateCataclysm/fallback.png);background-position: -160px -1088px;transform: scale(1) translate(0px, 0px);"></div>'}
 
   $tempPalette = New-Object psobject -Property @{
             key          = " "
             image        = $image
-            #url          = $url
             width = $null
             height = $null
             file = $null
@@ -197,8 +149,6 @@ IF("f_coffee_table" -eq $custompalette[$loop].image){$custompalette[$loop].image
 }
 }
 
-
-
 $sorcerows = $Custompalette.count
 
 for ($loop = 0; $loop -le $sorcerows - 1; $loop++){
@@ -212,7 +162,6 @@ $custompalette[$loop].height = $item.height
 $custompalette[$loop].file = $item.file
 $custompalette[$loop].x = $item.x
 $custompalette[$loop].y = $item.y
-
 
 }
 }
@@ -280,7 +229,6 @@ write-host $row
 $body = $body + $BodyRow
 foreach($tile in $row.ToCharArray()){
 #write-host $tile
-#$url = $null
 $width = $null
 $height = $null
 $file = $null
@@ -479,7 +427,6 @@ $menuAbout.Add_Click({About})
 
   $pictureBox.add_click({
 
- 
     
   $formx = ([System.Windows.Forms.Cursor]::Position.x) - $form.Location.x - 211   #padding of frame   OG 9 
   $formy = ([System.Windows.Forms.Cursor]::Position.y) - $form.Location.y - 56  #padding of frame    31 before filemenu
@@ -497,8 +444,6 @@ $menuAbout.Add_Click({About})
     $y = 0
     if($dataGrid.CurrentRow.Cells.value[0].width -eq 32 -and $dataGrid.CurrentRow.Cells.value[0].height -eq 64){$y = $y + 25}
 
-
-
     write-host $dataGrid.CurrentRow.Cells.value[1]
     #$filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension("error")
     $CutRec  = [System.Drawing.Rectangle]::new($x,$y,32,32)
@@ -509,7 +454,6 @@ $menuAbout.Add_Click({About})
     $graphics.dispose()
     $pictureBox.Update()
     $form.Refresh()
-
 
     #save a hash with the x,y and image changed.
 
@@ -550,7 +494,6 @@ foreach($row in $json.object[0].rows){ #object[0] only runs the first map.
   $tilecount = 0 - 1
   foreach($tile in $row.ToCharArray()){
   #write-host $tile
-  #$url = $null
   $width = $null
   $height = $null
   $file = $null

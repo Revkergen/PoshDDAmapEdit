@@ -623,9 +623,9 @@ Function load-mapfile{
 
 
 Function save-map{
-  
-  $mapnumber = 0
 
+  $mapnumber = 0
+  if($MapLoaded){
   $FileBrowser = New-Object System.Windows.Forms.SaveFileDialog
   $FileBrowser.InitialDirectory = [Environment]::GetFolderPath('Desktop')
   $FileBrowser.Filter = 'Mapfiles (*.json) | *.json'
@@ -633,19 +633,16 @@ Function save-map{
   #shows the box
   $null = $FileBrowser.ShowDialog()
   if($FileBrowser.FileName){
-  Write-host $FileBrowser.FileName
+    Write-host "Saving.."  
+    Write-host $FileBrowser.FileName
 
-    #need map number and changes.
-    #$MapJson.object[0].rows[0]
-    #go over the changes, might need to rebuild the string, hoping we can replace them in place.
     $rowcount = 0
-    foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the first map.
-      write-host $row
-      $rowcount++
+    foreach($row in $MapJson.object[$mapnumber].rows){ 
+      #write-host $row
       $tilecount = 0
       [string]$newrow = $null
       foreach($tile in $row.ToCharArray()){
-        write-host $tile
+        #write-host $tile
         if($Mapchanges[$tilecount,$rowcount]){$newrow = $newrow + $Mapchanges[$tilecount,$rowcount] }
         else{$newrow = $newrow + $tile}
         $tilecount++
@@ -658,9 +655,10 @@ Function save-map{
 
   $out = $MapJson | ConvertTo-Json -depth 100 | ForEach-Object { [System.Text.RegularExpressions.Regex]::Unescape($_) }
   set-Content $FileBrowser.FileName $out -Encoding UTF8
+  write-host "Save complete"
   }
 
-
+  }
 }
 
 
@@ -675,13 +673,20 @@ show-map
 
 #todo
 
-#filemenu needs renanmed and functions made
 
-#draw to funtion. call that rather than repeating code.
+#Split palletes into sub types ter/furn/item
+#figure out a way to sort the types in the sidebar. 
+
+#change map to draw in three(two?) passes one for each type. also fill in ground under items.
+#maybe two passes...hmmm
+
+#fix slowdown with map after side-bar runs
 #search box
-#file menu / save / load / export / pallets?
+#file menu / save / load / export / palletes?
 
+#monster placements?
 
 #done
 #clean up / remove URL stuff and tileset.csv stuff.
 #don't try to cache images we already have loaded.
+#filemenu needs renanmed and functions made

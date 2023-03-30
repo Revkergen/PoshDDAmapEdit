@@ -24,7 +24,7 @@ $Form.ShowDialog()
 
 foreach($item in $imagesorce){
 
-if($item.image -eq "f_coffee_table"){
+if($item.image -eq "can_beans"){
 
 
 $baseimagepath = "C:\Users\moorea\desktop\DDA\Ultimate\" + $item.file

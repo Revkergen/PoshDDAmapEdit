@@ -1,33 +1,20 @@
 ﻿Add-Type -AssemblyName System.Drawing
 [void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
+$script:MapLoaded = $false
+$Mapchanges = New-Object 'object[,]' 32,32
 
-
-
-
-Function load-mapfile{
-
-#clean up old map if loaded.
-
-$FileBrowser = New-Object System.Windows.Forms.OpenFileDialog
-$FileBrowser.InitialDirectory = [Environment]::GetFolderPath('Desktop')
-$FileBrowser.Filter = 'Mapfiles (*.json) | *.json'
-
-#shows the box
-$null = $FileBrowser.ShowDialog()
-Write-host $FileBrowser.FileName
-
+#paths hard coded for testing otherwise use relative paths
+if("" -eq $PSScriptRoot){
 
 }
 
-$file = "C:\users\moorea\Desktop\2storymodern01.json"
-$data = Get-Content -raw -path $file -Encoding UTF8
-$json = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
 
 
+Function load-palette{
 
 #find a pallete
 
-if( $json.object.palettes[0] -ne $null ){ 
+if( $MapJson.object.palettes[0] -ne $null ){ 
 
     $dir = Get-ChildItem "C:\users\moorea\desktop\DDA\Palettes" | %{$_.fullname}
     $found = 0
@@ -38,7 +25,7 @@ if( $json.object.palettes[0] -ne $null ){
     $data = Get-Content -raw -path $i -Encoding UTF8
     $palletejson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
 
-    if($palletejson.id -eq $json.object.palettes[0]){write-host "Found matching pallete at $i"
+    if($palletejson.id -eq $MapJson.object.palettes[0]){write-host "Found matching pallete at $i"
     $found = 1
     
     }}}
@@ -60,7 +47,6 @@ write-host $image
 $tempPalette = New-Object psobject -Property @{
         key          = $row.Key
         image        = $image
-        #url          = $url
         width = $null
         height = $null
         file = $null
@@ -76,7 +62,7 @@ $Custompalette += $tempPalette
 }
 
 #map palette code
-foreach ($collection in $json.object.terrain[0])  {  #trying to skip roof map tiles... needs a better fix. .getenumerator()
+foreach ($collection in $MapJson.object.terrain[0])  {  #trying to skip roof map tiles... needs a better fix. .getenumerator()
 ForEach ($row in $collection.getenumerator()){
 write-host $row
     $image = $row.Value.ToString() -match "(?<image>t_\w+)" | Foreach { $Matches.image }
@@ -115,8 +101,8 @@ write-host $row
 
 
 #deal with blanks in the map       
-if ($json.object.fill_ter[0]){
-$image = $json.object.fill_ter[0]
+if ($MapJson.object.fill_ter[0]){
+$image = $MapJson.object.fill_ter[0]
 
   $tempPalette = New-Object psobject -Property @{
             key          = " "
@@ -185,6 +171,10 @@ $custompalette[$loop].y = $item.y
 }
 }
 }
+Return $Custompalette
+}
+
+
 
 
 function write-html{
@@ -243,7 +233,7 @@ $body = $header
 
 $gfxcache=@()
 
-foreach($row in $json.object[0].rows){ #[0] only runs the first map.
+foreach($row in $MapJson.object[0].rows){ #[0] only runs the first map.
 write-host $row
 $body = $body + $BodyRow
 foreach($tile in $row.ToCharArray()){
@@ -314,28 +304,30 @@ function get-sidebar(){
   for ($loop = 0; $loop -le $Custompalette.count - 1; $loop++){
 
     if($Custompalette[$loop].file){
-    $CutRec  = [System.Drawing.Rectangle]::new($Custompalette[$loop].x,$Custompalette[$loop].y,$Custompalette[$loop].width,$Custompalette[$loop].height)
-    $filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension($Custompalette[$loop].file)
+    $CutRec2  = [System.Drawing.Rectangle]::new($Custompalette[$loop].x,$Custompalette[$loop].y,$Custompalette[$loop].width,$Custompalette[$loop].height)
+    $filename2 = "tempvarname" + [io.path]::GetFileNameWithoutExtension($Custompalette[$loop].file)
     }
     else{
-    $filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension("error")
-    $CutRec  = [System.Drawing.Rectangle]::new(0,0,32,32)
+    $filename2 = "tempvarname" + [io.path]::GetFileNameWithoutExtension("error")
+    $CutRec2  = [System.Drawing.Rectangle]::new(0,0,32,32)
     }
-    $baseimage = (Get-Variable -Scope "Script" -Name "$filename").Value
-    $cutimage = $baseimage.Clone($cutrec,$baseimage.PixelFormat)
-    [void]$script:dataGrid.Rows.Add($cutimage,$Custompalette[$loop].image)
-   }
-
-   $script:dataGrid | out-gridview
+    $baseimage2 = (Get-Variable -Scope "Script" -Name "$filename2").Value
+    $cutimage2 = $baseimage2.Clone($cutrec2,$baseimage2.PixelFormat)
+    [void]$script:dataGrid.Rows.Add($cutimage2,$Custompalette[$loop].image,$Custompalette[$loop].key)
+    #[void]$cutimage2.dispose() 
+  
+  }
+  
+   #$script:dataGrid | out-gridview
 }
 
 Function show-map(){
   $pictureBox = new-object Windows.Forms.PictureBox 
   $pictureBox.width=768
-  $pictureBox.height= $json.object.rows.count * 32
+  $pictureBox.height= $MapJson.object.rows.count * 32
   $pictureBox.top=25
   $pictureBox.left=202
-  $pictureBox.Image=$MAPimage
+  $pictureBox.Image=$MAPimagePlaceholder
   $pictureBox.SizeMode = "autosize"
   
   $script:dataGrid = New-Object System.Windows.Forms.DataGridView
@@ -346,22 +338,29 @@ Function show-map(){
   $dataGrid.ReadOnly = $true
   $dataGrid.RowHeadersVisible = $false
   $dataGrid.AllowUserToAddRows = $false
+  #$dataGrid.VirtualMode = $true
   $dataGrid.AutoSizeColumnsMode = 'Fill'
   $dataGrid.SelectionMode = "FullRowSelect"
   $datagrid.RowTemplate.Height = 62
   $datagrid.MultiSelect = $false
   $ImageColumn = New-Object System.Windows.Forms.DataGridViewImageColumn
-  $ImageColumn.Width = 62
+  $ImageColumn.Width = 64
   $dataGrid.Columns.Insert($dataGrid.Columns.Count, $ImageColumn)
   $dataGrid.Columns[0].HeaderText = "Preview"
   $dataGrid.Columns[0].Name = "ImageColumn"
-  $datagrid.ColumnCount = 2
+  $dataGrid.Columns[0].Width = 2
+  $datagrid.ColumnCount = 3
   $dataGrid.Columns[1].Name = "file"
   $dataGrid.Columns[1].HeaderText = "Image"
+  $dataGrid.Columns[1].Width = 60
+  $dataGrid.Columns[2].Name = "ASCII"
+  $dataGrid.Columns[2].HeaderText = "ASCII"
+  $dataGrid.Columns[2].Width = 40
+
 
   [Windows.Forms.Application]::EnableVisualStyles()
   $Form = New-Object Windows.Forms.Form  
-  $Form.Text = "PowerShell Form"                     
+  $Form.Text = "POSH C:DDA Map Editor"                     
   $Form.Width = 1000
   $Form.Height = 845
   $form.AutoScroll = $false
@@ -374,7 +373,7 @@ $menuView         = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuTools        = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuOpen         = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuSave         = New-Object System.Windows.Forms.ToolStripMenuItem
-$menuSaveAs       = New-Object System.Windows.Forms.ToolStripMenuItem
+$menuNewMap       = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuFullScr      = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuOptions      = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuOptions1     = New-Object System.Windows.Forms.ToolStripMenuItem
@@ -391,20 +390,20 @@ $Form.Controls.Add($menuMain)
 $menuFile.Text = "&File"
 [void]$menuMain.Items.Add($menuFile)
 
+$menuNewMap.ShortcutKeys = "Control, N"
+$menuNewMap.Text         = "&New map"
+$menuNewMap.Add_Click({NewMAP})
+[void]$menuFile.DropDownItems.Add($menuNewMap)
+
 $menuOpen.ShortcutKeys = "Control, O"
 $menuOpen.Text         = "&Open"
-$menuOpen.Add_Click({OpenFile})
+$menuOpen.Add_Click({load-mapfile})
 [void]$menuFile.DropDownItems.Add($menuOpen)
 
 $menuSave.ShortcutKeys = "F2"
 $menuSave.Text         = "&Save"
-$menuSave.Add_Click({SaveFile})
+$menuSave.Add_Click({Save-map})
 [void]$menuFile.DropDownItems.Add($menuSave)
-
-$menuSaveAs.ShortcutKeys = "Control, S"
-$menuSaveAs.Text         = "&Save As"
-$menuSaveAs.Add_Click({SaveAs})
-[void]$menuFile.DropDownItems.Add($menuSaveAs)
 
 $menuExit.ShortcutKeys = "Control, X"
 $menuExit.Text         = "&Exit"
@@ -446,14 +445,21 @@ $menuAbout.Add_Click({About})
 
   $pictureBox.add_click({
 
+  if($MapLoaded){
     
-  $formx = ([System.Windows.Forms.Cursor]::Position.x) - $form.Location.x - 211   #padding of frame   OG 9 
+  $formx = ([System.Windows.Forms.Cursor]::Position.x) - $form.Location.x - 211 #padding of frame   OG 9 
   $formy = ([System.Windows.Forms.Cursor]::Position.y) - $form.Location.y - 56  #padding of frame    31 before filemenu
       
     $formx = $formx / 32 
     $formy = $formy / 32
     $formx = [math]::floor($formx)
     $formy = [math]::floor($formy)
+    write-host "cell x" $formx
+    write-host "cell y" $formy
+    
+    
+    $Mapchanges[$formx,$formy] = $datagrid.CurrentRow.Cells.value[2]
+
     $formx = $formx * 32
     $formy = $formy * 32
     
@@ -475,10 +481,11 @@ $menuAbout.Add_Click({About})
     $form.Refresh()
 
     #save a hash with the x,y and image changed.
-
+  
+  }
     })
 
-    get-sidebar
+    
     $Form.ShowDialog()
   
   }
@@ -504,8 +511,8 @@ New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::
 #(Get-Variable).Name | write-host
 $gfxcache=@()
 $rowcount = 0 - 1
-$MAPimage = [System.Drawing.Bitmap]::new(768,$json.object[0].rows.count * 32) 
-foreach($row in $json.object[0].rows){ #object[0] only runs the first map.
+$MAPimage = [System.Drawing.Bitmap]::new(768,$MapJson.object[0].rows.count * 32) 
+foreach($row in $MapJson.object[0].rows){ #object[0] only runs the first map.
   write-host $row
   $rowcount++
   $tilecount = 0 - 1
@@ -557,7 +564,6 @@ if($height -eq 0){$height = 32}
 
 if($width -eq 32 -and $height -eq 64){$y = $y + 25 } #push long images up
 
-
 IF($file){
 
 $CutRec  = [System.Drawing.Rectangle]::new($x,$y,$width,$height)
@@ -575,22 +581,96 @@ $graphics.DrawImage((Get-Variable -Scope "Script" -Name "$filename").Value, $Des
 $graphics.dispose()
 
 }
+
 }
 $MAPimage.save("c:\users\moorea\desktop\work.png") 
 return $MAPimage
 }
 
 
-
-
-
-
-
-
 #write-html
-$MAPimage = get-map
+
+
+
+Function load-mapfile{
+
+  #clean up old map if loaded.
+
+
+  $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog
+  $FileBrowser.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+  $FileBrowser.Filter = 'Mapfiles (*.json) | *.json'
+  
+  #shows the box
+  $null = $FileBrowser.ShowDialog()
+  Write-host $FileBrowser.FileName
+  
+  if($FileBrowser.FileName){
+  $script:dataGrid.rows.Clear()
+  $data = Get-Content -raw -path $FileBrowser.FileName -Encoding UTF8
+  $script:MapJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
+  $script:MapLoaded = $true
+  
+  $script:Custompalette = load-palette
+  $script:MAPimage = get-map
+  get-sidebar
+
+  #show-map
+  $pictureBox.Image=$MAPimage
+  }
+
+}
+
+
+Function save-map{
+  
+  $mapnumber = 0
+
+  $FileBrowser = New-Object System.Windows.Forms.SaveFileDialog
+  $FileBrowser.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+  $FileBrowser.Filter = 'Mapfiles (*.json) | *.json'
+  
+  #shows the box
+  $null = $FileBrowser.ShowDialog()
+  if($FileBrowser.FileName){
+  Write-host $FileBrowser.FileName
+
+    #need map number and changes.
+    #$MapJson.object[0].rows[0]
+    #go over the changes, might need to rebuild the string, hoping we can replace them in place.
+    $rowcount = 0
+    foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the first map.
+      write-host $row
+      $rowcount++
+      $tilecount = 0
+      [string]$newrow = $null
+      foreach($tile in $row.ToCharArray()){
+        write-host $tile
+        if($Mapchanges[$tilecount,$rowcount]){$newrow = $newrow + $Mapchanges[$tilecount,$rowcount] }
+        else{$newrow = $newrow + $tile}
+        $tilecount++
+      }
+      $MapJson.object[$mapnumber].rows[$rowcount] = $newrow
+      $rowcount++
+    }
+
+
+
+  $out = $MapJson | ConvertTo-Json -depth 100 | ForEach-Object { [System.Text.RegularExpressions.Regex]::Unescape($_) }
+  set-Content $FileBrowser.FileName $out -Encoding UTF8
+  }
+
+
+}
+
+
+
+
 show-map
 
+#load-mapfile
+#$MAPimage = get-map
+#show-map
 
 
 #todo
@@ -598,7 +678,10 @@ show-map
 #filemenu needs renanmed and functions made
 
 #draw to funtion. call that rather than repeating code.
-#don't try to cache images we already have loaded.
 #search box
 #file menu / save / load / export / pallets?
+
+
+#done
 #clean up / remove URL stuff and tileset.csv stuff.
+#don't try to cache images we already have loaded.

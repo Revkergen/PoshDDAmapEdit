@@ -62,7 +62,7 @@ $Custompalette += $tempPalette
 }
 
 #map palette code
-foreach ($collection in $MapJson.object.terrain[0])  {  #trying to skip roof map tiles... needs a better fix. .getenumerator()
+foreach ($collection in $MapJson.object[0].terrain)  {  #trying to skip roof map tiles... needs a better fix. .getenumerator()
 ForEach ($row in $collection.getenumerator()){
 write-host $row
     $image = $row.Value.ToString() -match "(?<image>t_\w+)" | Foreach { $Matches.image }

@@ -1,13 +1,23 @@
 ﻿[void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
-$i = "C:\users\moorea\desktop\dda\ultimate\tile_config.json"
+
+#Find the root path of the script
+$PathToScript = Switch ($Host.name){
+    'Visual Studio Code Host' { split-path $psEditor.GetEditorContext().CurrentFile.Path }
+    'Windows PowerShell ISE Host' {  Split-Path -Path $psISE.CurrentFile.FullPath }
+    'ConsoleHost' { $PSScriptRoot }
+  }
+
+
+
+$i = "$PathToScript\ultimate\tile_config.json"
 $data = Get-Content -raw -path $i -Encoding UTF8
 $json = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
 
-$filepath = "C:\users\moorea\Desktop\DDA\Ultimate"
+$filepath = "$PathToScript\Ultimate"
 
 function spliter($file,$width,$height,$StartRange,$endrange){
 
-$baseimagepath = "C:\Users\moorea\desktop\DDA\Ultimate\" + $file
+$baseimagepath = "$PathToScript\Ultimate\" + $file
 $baseimage = [System.Drawing.Bitmap]::new($baseimagepath)
 $ImagesPerRow = $baseimage.Width / $width
 $imagerows = $baseimage.Height / $height

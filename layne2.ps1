@@ -3,12 +3,12 @@
 $script:MapLoaded = $false
 $Mapchanges = New-Object 'object[,]' 32,32
 
-#paths hard coded for testing otherwise use relative paths
-if("" -eq $PSScriptRoot){
-
+#Find the root path of the script
+$PathToScript = Switch ($Host.name){
+  'Visual Studio Code Host' { split-path $psEditor.GetEditorContext().CurrentFile.Path }
+  'Windows PowerShell ISE Host' {  Split-Path -Path $psISE.CurrentFile.FullPath }
+  'ConsoleHost' { $PSScriptRoot }
 }
-
-
 
 Function load-palette{
 
@@ -16,7 +16,7 @@ Function load-palette{
 
 if( $MapJson.object.palettes[0] -ne $null ){ 
 
-    $dir = Get-ChildItem "C:\users\moorea\desktop\DDA\Palettes" | %{$_.fullname}
+    $dir = Get-ChildItem $PathToScript\Palettes\ | %{$_.fullname}
     $found = 0
     foreach($i in $dir){
     
@@ -118,7 +118,7 @@ $image = $MapJson.object.fill_ter[0]
 
 
 #region palette.......... not a real palette, replace t_region with an real image.
-$file = "C:\Users\moorea\Desktop\DDA\regional_map_settings.json"
+$file = "$PathToScript\regional_map_settings.json"
 $data = Get-Content -raw -path $file -Encoding UTF8
 #[void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
 $RMSjson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
@@ -281,12 +281,12 @@ if ($tile -ceq $item.key){
     #-$x + "px" -$y + "px"
     $url4 = ';transform: scale(1) translate(0px, 0px);"></div>'
     
-    $url = $url1 + $url2 + "C:/users/moorea/desktop/dda/Ultimate/" + $file + $url3 + " -" + $x + "px " + "-" + $y + "px" + $url4
+    $url = $url1 + $url2 + "$PathToScript/Ultimate/" + $file + $url3 + " -" + $x + "px " + "-" + $y + "px" + $url4
   
     $body = $body + '<div class="column">' + "`r`n" + $url + "`r`n" + '</div>' + "`r`n"
     }
     else{
-    $url = $url1 + $url2 + "C:/users/moorea/desktop/dda/images/" + "error.png" + $url3 + " -" + "0" + "px " + "-" + "0" + "px" + $url4
+    $url = $url1 + $url2 + "$PathToScript/images/" + "error.png" + $url3 + " -" + "0" + "px " + "-" + "0" + "px" + $url4
     $body = $body + '<div class="column">' + "`r`n" + $url + "`r`n" + '</div>' + "`r`n"
     
     
@@ -296,7 +296,7 @@ if ($tile -ceq $item.key){
 
 $body = $body + $footer
 
-$body | out-file c:\users\moorea\desktop\layne.htm
+$body | out-file $PathToScript\MapExport.htm
 Write-host "Done"
 }
 function get-sidebar(){
@@ -492,7 +492,7 @@ $menuAbout.Add_Click({About})
 
 function get-map{
 #preload images.
-$dir = Get-ChildItem "C:\users\moorea\desktop\DDA\Ultimate" -Filter *.png | %{$_.fullname}  
+$dir = Get-ChildItem "$PathToScript\Ultimate" -Filter *.png | %{$_.fullname}  
 foreach($i in $dir){
 #write-host $i
 
@@ -504,8 +504,8 @@ New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::
 #(Get-Variable -Name "$filename").Value = [System.Drawing.Bitmap]::new($i)
 }
 
-$filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension("C:\Users\moorea\Desktop\DDA\Images\error.png")
-New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::new("C:\Users\moorea\Desktop\DDA\Images\error.png")) -ErrorAction SilentlyContinue
+$filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension("$PathToScript\Images\error.png")
+New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::new("$PathToScript\Images\error.png")) -ErrorAction SilentlyContinue
 
 
 #(Get-Variable).Name | write-host
@@ -583,7 +583,7 @@ $graphics.dispose()
 }
 
 }
-$MAPimage.save("c:\users\moorea\desktop\work.png") 
+$MAPimage.save("$PathToScript\MapExport.png") 
 return $MAPimage
 }
 

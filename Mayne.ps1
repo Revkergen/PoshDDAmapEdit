@@ -14,7 +14,7 @@ Function load-palette{
 
 #find a pallete
 
-if( $MapJson.object.palettes[0] -ne $null ){ 
+if( $null -ne $MapJson.object.palettes[0] ){ 
 
     $dir = Get-ChildItem $PathToScript\Palettes\ | %{$_.fullname}
     $found = 0
@@ -356,8 +356,25 @@ Function show-map(){
   $dataGrid.Columns[2].Name = "ASCII"
   $dataGrid.Columns[2].HeaderText = "ASCII"
   $dataGrid.Columns[2].Width = 40
+#
+
+$Mapselector = New-Object -TypeName System.Windows.Forms.ComboBox
+$Mapselector.Height = 200
+$Mapselector.Width  = 200
+$Mapselector.FormattingEnabled = $true
+$Mapselector.Location = new-object system.drawing.point(300,10)
+$Mapselector.AutoSize = $true
+#$Mapselector.
+
+foreach($map in $MapJson){
+if($map.'//'){
+  $Mapselector.Items.Add($map.'//')}
+else {$Mapselector.Items.Add($map.om_terrain)}
+}
 
 
+
+#Form stuff
   [Windows.Forms.Application]::EnableVisualStyles()
   $Form = New-Object Windows.Forms.Form  
   $Form.Text = "POSH C:DDA Map Editor"                     
@@ -440,7 +457,7 @@ $menuAbout.Add_Click({About})
 [void]$menuHelp.DropDownItems.Add($menuAbout)
 
   
-  $Form.controls.AddRange(@($pictureBox,$dataGrid))
+  $Form.controls.AddRange(@($pictureBox1,$dataGrid,$Mapselector))
   $Form.Add_Shown({$Form.Activate()})
 
   $pictureBox.add_click({

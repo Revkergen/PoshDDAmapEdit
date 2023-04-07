@@ -7,8 +7,6 @@ $PathToScript = Switch ($Host.name){
     'ConsoleHost' { $PSScriptRoot }
   }
 
-
-
 $i = "$PathToScript\ultimate\tile_config.json"
 $data = Get-Content -raw -path $i -Encoding UTF8
 $json = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
@@ -147,4 +145,4 @@ $imagesorce += $temp
 }
 }
 
-$imagesorce | out-gridview
+#$imagesorce | out-gridview

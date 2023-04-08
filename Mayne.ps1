@@ -2,7 +2,7 @@
 [void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
 $script:MapLoaded = $false
 $Mapchanges = New-Object 'object[,]' 32,32
-
+$script:mapnumber = 0  
 #Find the root path of the script
 $PathToScript = Switch ($Host.name){
   'Visual Studio Code Host' { split-path $psEditor.GetEditorContext().CurrentFile.Path }
@@ -175,8 +175,6 @@ Return $Custompalette
 }
 
 
-
-
 function write-html{
 
 write-host "Writing file..."
@@ -217,8 +215,6 @@ $BodyRow =@'
 </div>
 <div class="row">
 '@
-
-
 
 
 $footer =@'
@@ -356,23 +352,6 @@ Function show-map(){
   $dataGrid.Columns[2].Name = "ASCII"
   $dataGrid.Columns[2].HeaderText = "ASCII"
   $dataGrid.Columns[2].Width = 40
-#
-
-$Mapselector = New-Object -TypeName System.Windows.Forms.ComboBox
-$Mapselector.Height = 200
-$Mapselector.Width  = 200
-$Mapselector.FormattingEnabled = $true
-$Mapselector.Location = new-object system.drawing.point(300,10)
-$Mapselector.AutoSize = $true
-#$Mapselector.
-
-foreach($map in $MapJson){
-if($map.'//'){
-  $Mapselector.Items.Add($map.'//')}
-else {$Mapselector.Items.Add($map.om_terrain)}
-}
-
-
 
 #Form stuff
   [Windows.Forms.Application]::EnableVisualStyles()
@@ -386,12 +365,12 @@ else {$Mapselector.Items.Add($map.om_terrain)}
 #file menu stuff  
 $menuMain         = New-Object System.Windows.Forms.MenuStrip
 $menuFile         = New-Object System.Windows.Forms.ToolStripMenuItem
-$menuView         = New-Object System.Windows.Forms.ToolStripMenuItem
+$menuMaps         = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuTools        = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuOpen         = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuSave         = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuNewMap       = New-Object System.Windows.Forms.ToolStripMenuItem
-$menuFullScr      = New-Object System.Windows.Forms.ToolStripMenuItem
+
 $menuOptions      = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuOptions1     = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuOptions2     = New-Object System.Windows.Forms.ToolStripMenuItem
@@ -414,7 +393,7 @@ $menuNewMap.Add_Click({NewMAP})
 
 $menuOpen.ShortcutKeys = "Control, O"
 $menuOpen.Text         = "&Open"
-$menuOpen.Add_Click({load-mapfile})
+$menuOpen.Add_Click({load-mapfile "ask"})
 [void]$menuFile.DropDownItems.Add($menuOpen)
 
 $menuSave.ShortcutKeys = "F2"
@@ -427,13 +406,9 @@ $menuExit.Text         = "&Exit"
 $menuExit.Add_Click({$Form.Close()})
 [void]$menuFile.DropDownItems.Add($menuExit)
 
-$menuView.Text      = "&View"
-[void]$menuMain.Items.Add($menuView)
-
-$menuFullScr.ShortcutKeys = "Control, F"
-$menuFullScr.Text         = "&Full Screen"
-$menuFullScr.Add_Click({FullScreen})
-[void]$menuView.DropDownItems.Add($menuFullScr)
+$menuMaps.Text      = "&Maps"
+$menuMaps.Enabled = $false
+[void]$menuMain.Items.Add($menumaps)
 
 $menuTools.Text      = "&Tools"
 [void]$menuMain.Items.Add($menuTools)
@@ -456,8 +431,8 @@ $menuAbout.Text      = "About MenuStrip"
 $menuAbout.Add_Click({About})
 [void]$menuHelp.DropDownItems.Add($menuAbout)
 
-  
-  $Form.controls.AddRange(@($pictureBox1,$dataGrid,$Mapselector))
+ 
+  $Form.controls.AddRange(@($pictureBox,$dataGrid,$Mapselector))
   $Form.Add_Shown({$Form.Activate()})
 
   $pictureBox.add_click({
@@ -507,7 +482,7 @@ $menuAbout.Add_Click({About})
   
   }
 
-function get-map{
+function get-map($mapnumber){
 #preload images.
 $dir = Get-ChildItem "$PathToScript\Ultimate" -Filter *.png | %{$_.fullname}  
 foreach($i in $dir){
@@ -528,8 +503,9 @@ New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::
 #(Get-Variable).Name | write-host
 $gfxcache=@()
 $rowcount = 0 - 1
-$MAPimage = [System.Drawing.Bitmap]::new(768,$MapJson.object[0].rows.count * 32) 
-foreach($row in $MapJson.object[0].rows){ #object[0] only runs the first map.
+$IamgeY = $MapJson.object[$mapnumber].rows.count * 32
+$MAPimage = [System.Drawing.Bitmap]::new(768,$IamgeY) 
+foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the first map.
   write-host $row
   $rowcount++
   $tilecount = 0 - 1
@@ -609,11 +585,11 @@ return $MAPimage
 
 
 
-Function load-mapfile{
-
+Function load-mapfile($mapnumber){
+  write-host "loading map number "$mapnumber
   #clean up old map if loaded.
 
-
+  if($mapnumber -eq "ask"){
   $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog
   $FileBrowser.InitialDirectory = [Environment]::GetFolderPath('Desktop')
   $FileBrowser.Filter = 'Mapfiles (*.json) | *.json'
@@ -621,27 +597,49 @@ Function load-mapfile{
   #shows the box
   $null = $FileBrowser.ShowDialog()
   Write-host $FileBrowser.FileName
+  $script:loadedmap = $FileBrowser.FileName
+  if(!$FileBrowser.FileName){return}
+$script:mapnumber = 0  
+}
   
-  if($FileBrowser.FileName){
+  #if($FileBrowser.FileName){
   $script:dataGrid.rows.Clear()
   $data = Get-Content -raw -path $FileBrowser.FileName -Encoding UTF8
   $script:MapJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
   $script:MapLoaded = $true
   
   $script:Custompalette = load-palette
-  $script:MAPimage = get-map
-  get-sidebar
+  $script:MAPimage = get-map $mapnumber
+  get-sidebar 
 
   #show-map
   $pictureBox.Image=$MAPimage
+  #}
+
+  $menuMaps.DropDownItems.Clear()
+  $menuMaps.Enabled = $true
+  $loop = 0
+  foreach($map in $MapJson){
+    #Write-host 
+    if($map.'//'){
+    $tempItem = New-Object System.Windows.Forms.ToolStripMenuItem -ArgumentList $map.'//'}
+    else {$tempItem = New-Object System.Windows.Forms.ToolStripMenuItem -ArgumentList $map.om_terrain}
+    $tempItem.Tag = $loop
+    $tempItem.Add_Click({
+    write-host $this $this.tag 
+    load-mapfile $this.tag
+    })
+    $menuMaps.DropDownItems.Add($tempItem)
+  $loop++
   }
+
 
 }
 
 
-Function save-map{
+Function save-map($mapnumber){
 
-  $mapnumber = 0
+  #$mapnumber = 0
   if($MapLoaded){
   $FileBrowser = New-Object System.Windows.Forms.SaveFileDialog
   $FileBrowser.InitialDirectory = [Environment]::GetFolderPath('Desktop')
@@ -679,8 +677,6 @@ Function save-map{
 }
 
 
-
-
 show-map
 
 #load-mapfile
@@ -689,6 +685,9 @@ show-map
 
 
 #todo
+
+#Started work on adding map choice. need palletes updated too!!
+
 
 
 #Split palletes into sub types ter/furn/item

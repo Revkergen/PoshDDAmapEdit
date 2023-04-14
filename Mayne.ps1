@@ -295,7 +295,7 @@ $body = $body + $footer
 $body | out-file $PathToScript\MapExport.htm
 Write-host "Done"
 }
-```PowerShell
+
 function get-sidebar(){
 
   for ($loop = 0; $loop -le $Custompalette.count - 1; $loop++){
@@ -317,7 +317,7 @@ function get-sidebar(){
   
    #$script:dataGrid | out-gridview
 }
-```
+
 Function show-map(){
   $pictureBox = new-object Windows.Forms.PictureBox 
   $pictureBox.width=768
@@ -399,7 +399,7 @@ $menuOpen.Add_Click({load-mapfile "ask"})
 
 $menuSave.ShortcutKeys = "F2"
 $menuSave.Text         = "&Save"
-$menuSave.Add_Click({Save-map})
+$menuSave.Add_Click({Save-map $script:mapnumber})
 [void]$menuFile.DropDownItems.Add($menuSave)
 
 $menuExit.ShortcutKeys = "Control, X"
@@ -500,11 +500,10 @@ New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::
 $filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension("$PathToScript\Images\error.png")
 New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::new("$PathToScript\Images\error.png")) -ErrorAction SilentlyContinue
 
-
 #(Get-Variable).Name | write-host
 $gfxcache=@()
 $rowcount = 0 - 1
-$IamgeY = $MapJson.object[$mapnumber].rows.count * 32
+[int]$IamgeY = $MapJson.object[$mapnumber].rows.count * 32
 $MAPimage = [System.Drawing.Bitmap]::new(768,$IamgeY) 
 foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the first map.
   write-host $row
@@ -582,10 +581,6 @@ return $MAPimage
 }
 
 
-#write-html
-
-
-
 Function load-mapfile($mapnumber){
   write-host "loading map number "$mapnumber
   #clean up old map if loaded.
@@ -600,12 +595,13 @@ Function load-mapfile($mapnumber){
   Write-host $FileBrowser.FileName
   $script:loadedmap = $FileBrowser.FileName
   if(!$FileBrowser.FileName){return}
-$script:mapnumber = 0  
-}
+  $script:mapnumber = 0  
+  $mapnumber = 0
+  }
   
   #if($FileBrowser.FileName){
   $script:dataGrid.rows.Clear()
-  $data = Get-Content -raw -path $FileBrowser.FileName -Encoding UTF8
+  $data = Get-Content -raw -path $script:loadedmap -Encoding UTF8
   $script:MapJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
   $script:MapLoaded = $true
   
@@ -629,6 +625,7 @@ $script:mapnumber = 0
     $tempItem.Add_Click({
     write-host $this $this.tag 
     load-mapfile $this.tag
+    $script:mapnumber = $this.tag
     })
     $menuMaps.DropDownItems.Add($tempItem)
   $loop++
@@ -639,7 +636,7 @@ $script:mapnumber = 0
 
 
 Function save-map($mapnumber){
-
+Write-host $mapnumber
   #$mapnumber = 0
   if($MapLoaded){
   $FileBrowser = New-Object System.Windows.Forms.SaveFileDialog

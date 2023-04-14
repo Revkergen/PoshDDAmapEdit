@@ -295,6 +295,7 @@ $body = $body + $footer
 $body | out-file $PathToScript\MapExport.htm
 Write-host "Done"
 }
+```PowerShell
 function get-sidebar(){
 
   for ($loop = 0; $loop -le $Custompalette.count - 1; $loop++){
@@ -316,7 +317,7 @@ function get-sidebar(){
   
    #$script:dataGrid | out-gridview
 }
-
+```
 Function show-map(){
   $pictureBox = new-object Windows.Forms.PictureBox 
   $pictureBox.width=768

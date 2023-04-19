@@ -11,7 +11,7 @@ $i = "$PathToScript\ultimate\tile_config.json"
 $data = Get-Content -raw -path $i -Encoding UTF8
 $TileConfigJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
 
-$filepath = "$PathToScript\Ultimate"
+#$filepath = "$PathToScript\Ultimate"
 
 function spliter($file,$width,$height,$StartRange,$endrange){
 
@@ -47,6 +47,9 @@ for ($row = 0; $row -le $imagerows - 1; $row++){
     return $GFXindex
 
 }
+
+Function Load-TileConfig{
+
 $GFXindex =@{}
 
 $fileloops = $TileConfigJson.'tiles-new'.file.count
@@ -144,5 +147,11 @@ $imagesorce += $temp
 }
 }
 }
+
+return $imagesorce
+}
+
+
+$imagesorce = Load-TileConfig
 
 #$imagesorce | out-gridview

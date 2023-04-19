@@ -1,5 +1,7 @@
 ﻿Add-Type -AssemblyName System.Drawing
 [void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
+add-type -AssemblyName microsoft.VisualBasic
+Add-Type -AssemblyName System.Windows.Forms
 $script:MapLoaded = $false
 $Mapchanges = New-Object 'object[,]' 32,32
 $script:mapnumber = 0  

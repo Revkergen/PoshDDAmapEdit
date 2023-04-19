@@ -12,6 +12,12 @@ $PathToScript = Switch ($Host.name){
   'ConsoleHost' { $PSScriptRoot }
 }
 
+#tile config load
+$i = "$PathToScript\ultimate\tile_config.json"
+$data = Get-Content -raw -path $i -Encoding UTF8
+$TileConfigJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
+
+
 Function load-palette{
 
 #find a pallete
@@ -715,7 +721,7 @@ function spliter($file,$width,$height,$StartRange,$endrange){
   
   }
   
-Function Load-TileConfig{
+Function Load-TileConfig(){
  
 $GFXindex =@{}
   

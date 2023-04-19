@@ -822,8 +822,9 @@ $imagesorce += $temp
   
 return $imagesorce
 }
-  
-$imagesorce = Load-TileConfig
+
+if(!$imagesorce){$imagesorce = Load-TileConfig}
+else{write-host "Tile config already loaded, skipping..."}
 show-map
 
 #load-mapfile
@@ -833,8 +834,7 @@ show-map
 
 #todo
 
-#Started work on adding map choice. need palletes updated too!!
-
+#loading message / bar, maybe load gui then load everything else.
 
 
 #Split palletes into sub types ter/furn/item
@@ -849,7 +849,9 @@ show-map
 
 #monster placements?
 
+
 #done
 #clean up / remove URL stuff and tileset.csv stuff.
 #don't try to cache images we already have loaded.
 #filemenu needs renanmed and functions made
+#map  choice.

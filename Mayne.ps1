@@ -142,7 +142,6 @@ if( $null -ne $MapJson.object[$mapnumber].palettes ){
     }}}
 #setup pallette
 $Custompalette=@()
-$collection=@()
 
 #pallette terrain 
 $Custompalette += TerrainParse $palletejson
@@ -155,80 +154,7 @@ $Custompalette += FurnitureParse $palletejson
 
 #map terrain 
 $Custompalette += FurnitureParse $MapJson.object[$mapnumber]
-
-
-<# foreach ($collection in $palletejson.terrain.getenumerator())  {
-
-foreach ($row in $collection.getenumerator())  { 
-
-write-host $row
-$image = "BLANK"
-$image = [system.String]::Join(" ", $row.Value)  -match "(?<image>t_\w+)" |   Foreach { $Matches.image }
-#$image = $row.Value.ToString() -match "(?<image>t_\w+)" | Foreach { $Matches.image }
-
-write-host $image
-
-$tempPalette = New-Object psobject -Property @{
-        key          = $row.Key
-        image        = $image
-        width = $null
-        height = $null
-        file = $null
-        x = $null
-        y = $null
-
 }
-$Custompalette += $tempPalette
-}
-
-} #>
-#$Custompalette 
-}
-
-#map palette code
-#foreach ($collection in $MapJson.object[$mapnumber].terrain)  {  #trying to skip roof map tiles... needs a better fix. .getenumerator()
-#ForEach ($row in $collection.getenumerator()){
-#write-host $row
-#    $image = $row.Value.ToString() -match "(?<image>t_\w+)" | Foreach { $Matches.image }
-#
-#    $tempPalette = New-Object psobject -Property @{
-#            key          = $row.Key
-#            image        = $image
-#            width = $null
-#            height = $null
-#            file = $null
-#            x = $null
-#            y = $null
-#    }
-#    $Custompalette += $tempPalette
-#    }
-#}
-
-
-#foreach ($collection in $palletejson.furniture.getenumerator())  {
-#  write-host "pallette"
-#  ForEach ($row in $collection.getenumerator()){         
-#    write-host "pallette row"
-#    write-host $row
-#    $image = $row.Value.ToString() -match "(?<image>f_\w+)" | Foreach { $Matches.image }
-#
-#    $tempPalette = New-Object psobject -Property @{
-#            key          = $row.Key
-#            image        = $image
-#            width = $null
-#            height = $null
-#            file = $null
-#            x = $null
-#            y = $null
-#    }
-#    $Custompalette += $tempPalette
-#    }
-#}
-
-
-
-
-
 
 #deal with blanks in the map       
 if ($MapJson.object.fill_ter[0]){
@@ -246,7 +172,6 @@ $image = $MapJson.object.fill_ter[0]
     $Custompalette += $tempPalette
 }
 
-
 #region palette.......... not a real palette, replace t_region with an real image.
 $file = "$PathToScript\regional_map_settings.json"
 $data = Get-Content -raw -path $file -Encoding UTF8
@@ -257,7 +182,6 @@ $RMSjson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSeria
 $loops = $Custompalette.count
 foreach ($row in $RMSjson.region_terrain_and_furniture.terrain.getenumerator())  {
 $image = [system.String]::Join(" ", $row.Value)  -match "(?<image>t_\w+)" |   Foreach { $Matches.image }
-
 
 for ($loop = 0; $loop -le $loops - 1; $loop++) {
 

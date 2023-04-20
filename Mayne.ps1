@@ -18,6 +18,109 @@ $data = Get-Content -raw -path $i -Encoding UTF8
 $TileConfigJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
 
 
+Function TerrainParse($PalleteIN){
+  $OutPalette = @()
+  
+  foreach ($collection in $PalleteIN.terrain.getenumerator())  {
+  #$collection.GetType()
+  
+  if($collection.GetType().name -eq 'Dictionary`2' ){
+      foreach ($row in $collection.getenumerator())  {
+      write-host $row
+      $image = "BLANK"
+      $image = [system.String]::Join(" ", $row.Value)  -match "(?<image>t_\w+)" |   Foreach { $Matches.image }
+      write-host $image
+  
+          $tempPalette = New-Object psobject -Property @{
+          key = $row.Key
+          image = $image
+          width = $null
+          height = $null
+          file = $null
+          x = $null
+          y = $null
+  
+  }
+  $OutPalette += $tempPalette
+  
+  }
+  }
+  
+  else {
+      foreach ($row in $collection){
+      write-host $row
+      $image = "BLANK"
+      $image = [system.String]::Join(" ", $row.Value)  -match "(?<image>t_\w+)" |   Foreach { $Matches.image }}
+      write-host $image
+  
+  $tempPalette = New-Object psobject -Property @{
+          key = $row.Key
+          image = $image
+          width = $null
+          height = $null
+          file = $null
+          x = $null
+          y = $null
+  
+  }
+  $OutPalette += $tempPalette
+  }
+  }
+  Return $OutPalette
+  }
+
+  Function FurnitureParse($PalleteIN){
+    $OutPalette = @()
+    
+    foreach ($collection in $PalleteIN.furniture.getenumerator())  {
+    #$collection.GetType()
+    
+    if($collection.GetType().name -eq 'Dictionary`2' ){
+        foreach ($row in $collection.getenumerator())  {
+        write-host $row
+        $image = "BLANK"
+        $image = [system.String]::Join(" ", $row.Value)  -match "(?<image>f_\w+)" |   Foreach { $Matches.image }
+        write-host $image
+    
+            $tempPalette = New-Object psobject -Property @{
+            key = $row.Key
+            image = $image
+            width = $null
+            height = $null
+            file = $null
+            x = $null
+            y = $null
+    
+    }
+    $OutPalette += $tempPalette
+    
+    }
+    }
+    
+    else {
+        foreach ($row in $collection){
+        write-host $row
+        $image = "BLANK"
+        $image = [system.String]::Join(" ", $row.Value)  -match "(?<image>f_\w+)" |   Foreach { $Matches.image }}
+        write-host $image
+    
+    $tempPalette = New-Object psobject -Property @{
+            key = $row.Key
+            image = $image
+            width = $null
+            height = $null
+            file = $null
+            x = $null
+            y = $null
+    
+    }
+    $OutPalette += $tempPalette
+    }
+    }
+    Return $OutPalette
+    }
+
+
 Function load-palette($mapnumber){
 
 #find a pallete
@@ -37,11 +140,24 @@ if( $null -ne $MapJson.object[$mapnumber].palettes ){
     $found = 1
     
     }}}
-#load palette
+#setup pallette
 $Custompalette=@()
 $collection=@()
 
-foreach ($collection in $palletejson.terrain.getenumerator())  {
+#pallette terrain 
+$Custompalette += TerrainParse $palletejson
+
+#map terrain 
+$Custompalette += TerrainParse $MapJson.object[$mapnumber]
+
+#pallette furniture 
+$Custompalette += FurnitureParse $palletejson
+
+#map terrain 
+$Custompalette += FurnitureParse $MapJson.object[$mapnumber]
+
+
+<# foreach ($collection in $palletejson.terrain.getenumerator())  {
 
 foreach ($row in $collection.getenumerator())  { 
 
@@ -65,49 +181,53 @@ $tempPalette = New-Object psobject -Property @{
 $Custompalette += $tempPalette
 }
 
-}
+} #>
 #$Custompalette 
 }
 
 #map palette code
-foreach ($collection in $MapJson.object[$mapnumber].terrain)  {  #trying to skip roof map tiles... needs a better fix. .getenumerator()
-ForEach ($row in $collection.getenumerator()){
-write-host $row
-    $image = $row.Value.ToString() -match "(?<image>t_\w+)" | Foreach { $Matches.image }
+#foreach ($collection in $MapJson.object[$mapnumber].terrain)  {  #trying to skip roof map tiles... needs a better fix. .getenumerator()
+#ForEach ($row in $collection.getenumerator()){
+#write-host $row
+#    $image = $row.Value.ToString() -match "(?<image>t_\w+)" | Foreach { $Matches.image }
+#
+#    $tempPalette = New-Object psobject -Property @{
+#            key          = $row.Key
+#            image        = $image
+#            width = $null
+#            height = $null
+#            file = $null
+#            x = $null
+#            y = $null
+#    }
+#    $Custompalette += $tempPalette
+#    }
+#}
 
-    $tempPalette = New-Object psobject -Property @{
-            key          = $row.Key
-            image        = $image
-            width = $null
-            height = $null
-            file = $null
-            x = $null
-            y = $null
-    }
-    $Custompalette += $tempPalette
-    }
-}
 
-#pallette furniture code
-foreach ($collection in $palletejson.furniture.getenumerator())  {
-  write-host "pallette"
-  ForEach ($row in $collection.getenumerator()){         
-    write-host "pallette row"
-    write-host $row
-    $image = $row.Value.ToString() -match "(?<image>f_\w+)" | Foreach { $Matches.image }
+#foreach ($collection in $palletejson.furniture.getenumerator())  {
+#  write-host "pallette"
+#  ForEach ($row in $collection.getenumerator()){         
+#    write-host "pallette row"
+#    write-host $row
+#    $image = $row.Value.ToString() -match "(?<image>f_\w+)" | Foreach { $Matches.image }
+#
+#    $tempPalette = New-Object psobject -Property @{
+#            key          = $row.Key
+#            image        = $image
+#            width = $null
+#            height = $null
+#            file = $null
+#            x = $null
+#            y = $null
+#    }
+#    $Custompalette += $tempPalette
+#    }
+#}
 
-    $tempPalette = New-Object psobject -Property @{
-            key          = $row.Key
-            image        = $image
-            width = $null
-            height = $null
-            file = $null
-            x = $null
-            y = $null
-    }
-    $Custompalette += $tempPalette
-    }
-}
+
+
+
 
 
 #deal with blanks in the map       

@@ -18,11 +18,11 @@ $data = Get-Content -raw -path $i -Encoding UTF8
 $TileConfigJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
 
 
-Function load-palette{
+Function load-palette($mapnumber){
 
 #find a pallete
 
-if( $null -ne $MapJson.object.palettes[0] ){ 
+if( $null -ne $MapJson.object[$mapnumber].palettes ){ 
 
     $dir = Get-ChildItem $PathToScript\Palettes\ | %{$_.fullname}
     $found = 0
@@ -33,7 +33,7 @@ if( $null -ne $MapJson.object.palettes[0] ){
     $data = Get-Content -raw -path $i -Encoding UTF8
     $palletejson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
 
-    if($palletejson.id -eq $MapJson.object.palettes[0]){write-host "Found matching pallete at $i"
+    if($palletejson.id -eq $MapJson.object[$mapnumber].palettes[0]){write-host "Found matching pallete at $i"
     $found = 1
     
     }}}
@@ -43,7 +43,7 @@ $collection=@()
 
 foreach ($collection in $palletejson.terrain.getenumerator())  {
 
-foreach ($row in $collection.getenumerator())  {
+foreach ($row in $collection.getenumerator())  { 
 
 write-host $row
 $image = "BLANK"
@@ -70,7 +70,7 @@ $Custompalette += $tempPalette
 }
 
 #map palette code
-foreach ($collection in $MapJson.object[0].terrain)  {  #trying to skip roof map tiles... needs a better fix. .getenumerator()
+foreach ($collection in $MapJson.object[$mapnumber].terrain)  {  #trying to skip roof map tiles... needs a better fix. .getenumerator()
 ForEach ($row in $collection.getenumerator()){
 write-host $row
     $image = $row.Value.ToString() -match "(?<image>t_\w+)" | Foreach { $Matches.image }
@@ -88,10 +88,12 @@ write-host $row
     }
 }
 
-#map furniture code
+#pallette furniture code
 foreach ($collection in $palletejson.furniture.getenumerator())  {
-ForEach ($row in $collection.getenumerator()){
-write-host $row
+  write-host "pallette"
+  ForEach ($row in $collection.getenumerator()){         
+    write-host "pallette row"
+    write-host $row
     $image = $row.Value.ToString() -match "(?<image>f_\w+)" | Foreach { $Matches.image }
 
     $tempPalette = New-Object psobject -Property @{
@@ -592,6 +594,7 @@ return $MAPimage
 Function load-mapfile($mapnumber){
   write-host "loading map number "$mapnumber
   #clean up old map if loaded.
+if($MapLoaded){Get-Variable | where-object -Property name -like 'tempvarname*' | Remove-Variable -Scope "Script"}
 
   if($mapnumber -eq "ask"){
   $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog
@@ -613,7 +616,7 @@ Function load-mapfile($mapnumber){
   $script:MapJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
   $script:MapLoaded = $true
   
-  $script:Custompalette = load-palette
+  $script:Custompalette = load-palette $mapnumber
   $script:MAPimage = get-map $mapnumber
   get-sidebar 
 
@@ -638,10 +641,7 @@ Function load-mapfile($mapnumber){
     $menuMaps.DropDownItems.Add($tempItem)
   $loop++
   }
-
-
 }
-
 
 Function save-map($mapnumber){
 Write-host $mapnumber
@@ -672,8 +672,6 @@ Write-host $mapnumber
       $rowcount++
     }
 
-
-
   $out = $MapJson | ConvertTo-Json -depth 100 | ForEach-Object { [System.Text.RegularExpressions.Regex]::Unescape($_) }
   set-Content $FileBrowser.FileName $out -Encoding UTF8
   write-host "Save complete"
@@ -682,9 +680,7 @@ Write-host $mapnumber
   }
 }
 
-
 #load tile config code
-
 
 function spliter($file,$width,$height,$StartRange,$endrange){
 
@@ -855,3 +851,4 @@ show-map
 #don't try to cache images we already have loaded.
 #filemenu needs renanmed and functions made
 #map  choice.
+#fix slowdown with map after side-bar runs.

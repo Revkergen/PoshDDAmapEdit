@@ -143,6 +143,22 @@ if( $null -ne $MapJson.object[$mapnumber].palettes ){
 #setup pallette
 $Custompalette=@()
 
+#some maps use fill_ter rather than define an area.... add this first as a work around. 
+if ($MapJson.object.fill_ter[0]){
+  $image = $MapJson.object.fill_ter[0]
+  
+    $tempPalette = New-Object psobject -Property @{
+              key          = " "
+              image        = $image
+              width = $null
+              height = $null
+              file = $null
+              x = $null
+              y = $null
+      }
+      $Custompalette += $tempPalette
+  }
+
 #pallette terrain 
 $Custompalette += TerrainParse $palletejson
 
@@ -155,8 +171,13 @@ $Custompalette += FurnitureParse $palletejson
 #map terrain 
 $Custompalette += FurnitureParse $MapJson.object[$mapnumber]
 }
+else{
+  $Custompalette += TerrainParse $MapJson.object[$mapnumber]
+  $Custompalette += FurnitureParse $MapJson.object[$mapnumber]
+}
 
-#deal with blanks in the map       
+
+<# #deal with blanks in the map       
 if ($MapJson.object.fill_ter[0]){
 $image = $MapJson.object.fill_ter[0]
 
@@ -171,8 +192,9 @@ $image = $MapJson.object.fill_ter[0]
     }
     $Custompalette += $tempPalette
 }
+ #>
 
-#region palette.......... not a real palette, replace t_region with an real image.
+ #region palette.......... not a real palette, replace t_region with an real image.
 $file = "$PathToScript\regional_map_settings.json"
 $data = Get-Content -raw -path $file -Encoding UTF8
 #[void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
@@ -560,7 +582,7 @@ $rowcount = 0 - 1
 [int]$IamgeY = $MapJson.object[$mapnumber].rows.count * 32
 $MAPimage = [System.Drawing.Bitmap]::new(768,$IamgeY) 
 foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the first map.
-  write-host $row
+  write-host $row  # 100 ms faster without this 
   $rowcount++
   $tilecount = 0 - 1
   foreach($tile in $row.ToCharArray()){
@@ -596,7 +618,7 @@ foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the firs
         $file = $item.file
         $x = $item.x
         $y = $item.y
-        $gfxcache += $item
+        #$gfxcache += $item
         }
       }
     }
@@ -612,23 +634,21 @@ if($height -eq 0){$height = 32}
 if($width -eq 32 -and $height -eq 64){$y = $y + 25 } #push long images up
 
 IF($file){
-
 $CutRec  = [System.Drawing.Rectangle]::new($x,$y,$width,$height)
 $filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension($file)
 }
 else{
 $filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension("error")
 $CutRec  = [System.Drawing.Rectangle]::new(0,0,32,32)
+$width = 32
+$height = 32
 }
-
 $DesRec = [System.Drawing.Rectangle]::new($PictureboxX,$PictureboxY,$width,$height)  
 $graphics=[System.Drawing.Graphics]::FromImage($MAPimage)
 $units = [System.Drawing.GraphicsUnit]::Pixel
 $graphics.DrawImage((Get-Variable -Scope "Script" -Name "$filename").Value, $DesRec, $CutRec, $units)
 $graphics.dispose()
-
 }
-
 }
 $MAPimage.save("$PathToScript\MapExport.png") 
 return $MAPimage
@@ -674,16 +694,26 @@ if($MapLoaded){Get-Variable | where-object -Property name -like 'tempvarname*' |
   foreach($map in $MapJson){
     #Write-host 
     if($map.'//'){
-    $tempItem = New-Object System.Windows.Forms.ToolStripMenuItem -ArgumentList $map.'//'}
-    else {$tempItem = New-Object System.Windows.Forms.ToolStripMenuItem -ArgumentList $map.om_terrain}
+    $tempItem = New-Object System.Windows.Forms.ToolStripMenuItem -ArgumentList $map.'//'
     $tempItem.Tag = $loop
     $tempItem.Add_Click({
     write-host $this $this.tag 
     load-mapfile $this.tag
-    $script:mapnumber = $this.tag
-    })
+    $script:mapnumber = $this.tag})
     $menuMaps.DropDownItems.Add($tempItem)
-  $loop++
+    $loop++
+    }
+    elseif($map.om_terrain){
+    $tempItem = New-Object System.Windows.Forms.ToolStripMenuItem -ArgumentList $map.om_terrain
+    $tempItem.Tag = $loop
+    $tempItem.Add_Click({
+    write-host $this $this.tag 
+    load-mapfile $this.tag
+    $script:mapnumber = $this.tag})
+    $menuMaps.DropDownItems.Add($tempItem)
+    $loop++
+    }
+    else{}
   }
 }
 

@@ -17,7 +17,6 @@ $i = "$PathToScript\ultimate\tile_config.json"
 $data = Get-Content -raw -path $i -Encoding UTF8
 $TileConfigJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
 
-
 Function TerrainParse($PalleteIN){
   $OutPalette = @()
   
@@ -176,25 +175,7 @@ else{
   $Custompalette += FurnitureParse $MapJson.object[$mapnumber]
 }
 
-
-<# #deal with blanks in the map       
-if ($MapJson.object.fill_ter[0]){
-$image = $MapJson.object.fill_ter[0]
-
-  $tempPalette = New-Object psobject -Property @{
-            key          = " "
-            image        = $image
-            width = $null
-            height = $null
-            file = $null
-            x = $null
-            y = $null
-    }
-    $Custompalette += $tempPalette
-}
- #>
-
- #region palette.......... not a real palette, replace t_region with an real image.
+#region palette.......... not a real palette, replace t_region with an real image.
 $file = "$PathToScript\regional_map_settings.json"
 $data = Get-Content -raw -path $file -Encoding UTF8
 #[void][System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
@@ -218,15 +199,10 @@ IF("t_floor_noroof" -eq $custompalette[$loop].image){$custompalette[$loop].image
 }
 #region furniture
 foreach ($row in $RMSjson.region_terrain_and_furniture.furniture.getenumerator())  {
-$image = [system.String]::Join(" ", $row.Value)  -match "(?<image>t_\w+)" |   Foreach { $Matches.image }
-
-
+$image = [system.String]::Join(" ", $row.Value)  -match "(?<image>f_\w+)" |   Foreach { $Matches.image }
 for ($loop = 0; $loop -le $loops - 1; $loop++) {
-
 IF($row.key -eq $custompalette[$loop].image){$custompalette[$loop].image =$image}
-
 IF("f_coffee_table" -eq $custompalette[$loop].image){$custompalette[$loop].image = "f_table"}
-
 }
 }
 
@@ -618,7 +594,7 @@ foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the firs
         $file = $item.file
         $x = $item.x
         $y = $item.y
-        #$gfxcache += $item
+        $gfxcache += $item
         }
       }
     }
@@ -653,7 +629,6 @@ $graphics.dispose()
 $MAPimage.save("$PathToScript\MapExport.png") 
 return $MAPimage
 }
-
 
 Function load-mapfile($mapnumber){
   write-host "loading map number "$mapnumber
@@ -792,7 +767,9 @@ function spliter($file,$width,$height,$StartRange,$endrange){
   }
   
 Function Load-TileConfig(){
- 
+if(test-path "$PathToScript\Imagemap.xml"){ $imagesorce =  import-Clixml   "$PathToScript\Imagemap.xml"}
+else{
+
 $GFXindex =@{}
   
 $fileloops = $TileConfigJson.'tiles-new'.file.count
@@ -889,7 +866,8 @@ $imagesorce += $temp
 }
 }
 }
-  
+if(!(test-path "$PathToScript\Imagemap.xml")){$imagesorce | Export-Clixml  "$PathToScript\Imagemap.xml"}
+}
 return $imagesorce
 }
 

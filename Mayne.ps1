@@ -798,6 +798,28 @@ for ($fileloop = 0; $fileloop -le $fileloops - 2; $fileloop++){
 write-host $fileloop
 Write-host $TileConfigJson.'tiles-new'[$fileloop].file
 
+$X_offset    =$tileconfigjson.'tiles-new'[$fileloop].sprite_offset_x     
+$Y_offset    =$tileconfigjson.'tiles-new'[$fileloop].sprite_offset_y
+if($null -eq $x_offset){$X_offset = 0}
+if($null -eq $y_offset){$y_offset = 0}
+
+$sprite_X = $tileconfigjson.'tiles-new'[$fileloop].sprite_width
+$sprite_Y = $tileconfigjson.'tiles-new'[$fileloop].sprite_height
+
+if($null -eq $sprite_X){$sprite_X = 32}
+if($null -eq $sprite_Y){$sprite_Y = 32}
+
+#normalize the layers a bit.    /45
+[int]$ZLayer = ($sprite_X + $sprite_y) / 4
+
+#40		10
+#64		16
+#68		17
+#72		18
+#96		24
+#128	32
+#192	48
+
 $loops = $TileConfigJson.'tiles-new'[$fileloop].tiles.count
 
 for ($loop = 0; $loop -le $loops - 1; $loop++) {
@@ -825,8 +847,10 @@ $temp = New-Object psobject -Property @{
     File        =$TileConfigJson.'tiles-new'[$fileloop].file
     width       =$GFXindex.$FG.width
     height      =$GFXindex.$FG.height
-        
-}
+    X_offset    =$X_offset    
+    Y_offset    =$Y_offset
+    ZLayer      =$ZLayer  
+  }
 $imagesorce += $temp
 
 }
@@ -858,7 +882,9 @@ $temp = New-Object psobject -Property @{
       File        =$TileConfigJson.'tiles-new'[$fileloop].file
       width       =$GFXindex.$FG.width
       height      =$GFXindex.$FG.height
-          
+      X_offset    =$X_offset    
+      Y_offset    =$Y_offset
+      ZLayer      =$ZLayer      
 }
 $imagesorce += $temp
   
@@ -904,3 +930,15 @@ show-map
 #filemenu needs renanmed and functions made
 #map  choice.
 #fix slowdown with map after side-bar runs.
+
+
+
+
+
+
+
+
+
+#add Z number based on the size of the image?
+#run multiple draw passes one for each Z layer.
+#should let the bigger objects over lap the smaller and fake some depth.

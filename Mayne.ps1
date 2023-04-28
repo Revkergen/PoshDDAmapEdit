@@ -129,6 +129,25 @@ Function TerrainParse($PalleteIN){
     Return $OutPalette
     }
 
+Function lookslike(){
+  $list=@()
+  $dir = Get-ChildItem $PathToScript\furniture_and_terrain\ | %{$_.fullname}
+  foreach($i in $dir){
+  $data = Get-Content -raw -path $i -Encoding UTF8
+  $LLjson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
+  
+  foreach($row in $LLjson){
+   if($row.looks_like)   {
+   $out = New-Object psobject -Property @{
+             Id = $row.id
+             Image = $row.looks_like}
+      $list += $out
+   
+  }}}
+
+return $list
+}
+
 
 Function load-palette($mapnumber){
 
@@ -220,6 +239,19 @@ IF("f_coffee_table" -eq $custompalette[$loop].image){$custompalette[$loop].image
 }
 }
 
+$lookslike = lookslike
+
+#foreach ($row in $lookslike)  {
+#  for ($loop = 0; $loop -le $loops - 1; $loop++) {
+#  
+#    IF($row.id -eq $custompalette[$loop].image){$custompalette[$loop].image =$row.image
+#    write-host "Got one" $row.id " " $row.image
+#    }
+#  
+#  }
+#}
+
+
 $sorcerows = $Custompalette.count
 
 for ($loop = 0; $loop -le $sorcerows - 1; $loop++){
@@ -237,6 +269,30 @@ $custompalette[$loop].'X_offset' = $item.'X_offset'
 $custompalette[$loop].'Y_offset' = $item.'Y_offset'
 $custompalette[$loop].ZLayer     = $item.ZLayer  
 }
+}
+If(!$custompalette[$loop].file){write-host "Missing image  " $Custompalette[$loop].image
+$found = 0
+foreach ($row in $lookslike)  {
+  IF($row.id -eq $custompalette[$loop].image){$custompalette[$loop].image =$row.image
+    write-host "Got one" "id" $row.id " " "image" $row.image
+  $found = 1  
+  }
+  }
+  if($found -eq 1){
+  foreach($item in $imagesorce){
+
+    if($Custompalette[$loop].image -eq $item.image){
+    
+    $custompalette[$loop].width      = $item.width
+    $custompalette[$loop].height     = $item.height
+    $custompalette[$loop].file       = $item.file
+    $custompalette[$loop].x          = $item.x
+    $custompalette[$loop].y          = $item.y
+    $custompalette[$loop].'X_offset' = $item.'X_offset'
+    $custompalette[$loop].'Y_offset' = $item.'Y_offset'
+    $custompalette[$loop].ZLayer     = $item.ZLayer  
+    }
+    }}
 }
 }
 Return $Custompalette
@@ -429,10 +485,6 @@ Function show-map(){
   $dataGrid.Columns[4].HeaderText = "Y_offset"
   $dataGrid.Columns[4].Width = 0
   $dataGrid.Columns[4].visible = $false
-
-
-
-
 
 
 #Form stuff
@@ -965,15 +1017,3 @@ show-map
 #filemenu needs renanmed and functions made
 #map  choice.
 #fix slowdown with map after side-bar runs.
-
-
-
-
-
-
-
-
-
-#add Z number based on the size of the image?
-#run multiple draw passes one for each Z layer.
-#should let the bigger objects over lap the smaller and fake some depth.

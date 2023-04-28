@@ -38,7 +38,9 @@ Function TerrainParse($PalleteIN){
           file = $null
           x = $null
           y = $null
-  
+          X_offset = $null
+          Y_offset = $null
+          ZLayer = $null 
   }
   $OutPalette += $tempPalette
   
@@ -60,7 +62,9 @@ Function TerrainParse($PalleteIN){
           file = $null
           x = $null
           y = $null
-  
+          X_offset = $null
+          Y_offset = $null
+          ZLayer = $null 
   }
   $OutPalette += $tempPalette
   }
@@ -89,7 +93,9 @@ Function TerrainParse($PalleteIN){
             file = $null
             x = $null
             y = $null
-    
+            X_offset = $null
+            Y_offset = $null
+            ZLayer = $null  
     }
     $OutPalette += $tempPalette
     
@@ -111,6 +117,10 @@ Function TerrainParse($PalleteIN){
             file = $null
             x = $null
             y = $null
+            X_offset = $null
+            Y_offset = $null
+            ZLayer = $null  
+
     
     }
     $OutPalette += $tempPalette
@@ -154,6 +164,10 @@ if ($MapJson.object.fill_ter[0]){
               file = $null
               x = $null
               y = $null
+              X_offset = $null
+              Y_offset = $null
+              ZLayer = $null  
+
       }
       $Custompalette += $tempPalette
   }
@@ -214,12 +228,14 @@ foreach($item in $imagesorce){
 
 if($Custompalette[$loop].image -eq $item.image){
 
-$custompalette[$loop].width = $item.width
-$custompalette[$loop].height = $item.height
-$custompalette[$loop].file = $item.file
-$custompalette[$loop].x = $item.x
-$custompalette[$loop].y = $item.y
-
+$custompalette[$loop].width      = $item.width
+$custompalette[$loop].height     = $item.height
+$custompalette[$loop].file       = $item.file
+$custompalette[$loop].x          = $item.x
+$custompalette[$loop].y          = $item.y
+$custompalette[$loop].'X_offset' = $item.'X_offset'
+$custompalette[$loop].'Y_offset' = $item.'Y_offset'
+$custompalette[$loop].ZLayer     = $item.ZLayer  
 }
 }
 }
@@ -362,7 +378,7 @@ function get-sidebar(){
     }
     $baseimage2 = (Get-Variable -Scope "Script" -Name "$filename2").Value
     $cutimage2 = $baseimage2.Clone($cutrec2,$baseimage2.PixelFormat)
-    [void]$script:dataGrid.Rows.Add($cutimage2,$Custompalette[$loop].image,$Custompalette[$loop].key)
+    [void]$script:dataGrid.Rows.Add($cutimage2,$Custompalette[$loop].image,$Custompalette[$loop].key,$Custompalette[$loop].'x_offset',$Custompalette[$loop].'y_offset')
     #[void]$cutimage2.dispose() 
   
   }
@@ -398,13 +414,26 @@ Function show-map(){
   $dataGrid.Columns[0].HeaderText = "Preview"
   $dataGrid.Columns[0].Name = "ImageColumn"
   $dataGrid.Columns[0].Width = 2
-  $datagrid.ColumnCount = 3
+  $datagrid.ColumnCount = 5
   $dataGrid.Columns[1].Name = "file"
   $dataGrid.Columns[1].HeaderText = "Image"
   $dataGrid.Columns[1].Width = 60
   $dataGrid.Columns[2].Name = "ASCII"
   $dataGrid.Columns[2].HeaderText = "ASCII"
   $dataGrid.Columns[2].Width = 40
+  $dataGrid.Columns[3].Name = "X_offset"
+  $dataGrid.Columns[3].HeaderText = "X_offset"
+  $dataGrid.Columns[3].Width = 0
+  $dataGrid.Columns[3].visible = $false
+  $dataGrid.Columns[4].Name = "Y_offset"
+  $dataGrid.Columns[4].HeaderText = "Y_offset"
+  $dataGrid.Columns[4].Width = 0
+  $dataGrid.Columns[4].visible = $false
+
+
+
+
+
 
 #Form stuff
   [Windows.Forms.Application]::EnableVisualStyles()
@@ -505,18 +534,18 @@ $menuAbout.Add_Click({About})
     
     $Mapchanges[$formx,$formy] = $datagrid.CurrentRow.Cells.value[2]
 
-    $formx = $formx * 32
-    $formy = $formy * 32
+    $formx = $formx * 32 + $dataGrid.CurrentRow.Cells.value[3]
+    $formy = $formy * 32 + $dataGrid.CurrentRow.Cells.value[4]
     
-    $width = 32
-    $height = 32
+    $width = $dataGrid.CurrentRow.Cells.value[0].width #$dataGrid.CurrentRow.Cells.value[5] #32
+    $height = $dataGrid.CurrentRow.Cells.value[0].Height #$dataGrid.CurrentRow.Cells.value[6] #32
     $x = 0
     $y = 0
-    if($dataGrid.CurrentRow.Cells.value[0].width -eq 32 -and $dataGrid.CurrentRow.Cells.value[0].height -eq 64){$y = $y + 25}
+    #if($dataGrid.CurrentRow.Cells.value[0].width -eq 32 -and $dataGrid.CurrentRow.Cells.value[0].height -eq 64){$y = $y + 25}
 
     write-host $dataGrid.CurrentRow.Cells.value[1]
     #$filename = "tempvarname" + [io.path]::GetFileNameWithoutExtension("error")
-    $CutRec  = [System.Drawing.Rectangle]::new($x,$y,32,32)
+    $CutRec  = [System.Drawing.Rectangle]::new($x,$y,$width,$height)
     $DesRec = [System.Drawing.Rectangle]::new($formx,$formy,$width,$height)  
     $graphics=[System.Drawing.Graphics]::FromImage($MAPimage)
     $units = [System.Drawing.GraphicsUnit]::Pixel
@@ -579,7 +608,9 @@ foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the firs
         $file = $item.file
         $x = $item.x
         $y = $item.y
-        
+        $x_offset = $item.'x_offset'
+        $y_offset = $item.'y_offset'
+        $ZLayer   = $item.ZLayer
         }
       }  
     
@@ -594,6 +625,9 @@ foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the firs
         $file = $item.file
         $x = $item.x
         $y = $item.y
+        $x_offset = $item.'x_offset'
+        $y_offset = $item.'y_offset'
+        $ZLayer   = $item.ZLayer
         $gfxcache += $item
         }
       }
@@ -601,13 +635,14 @@ foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the firs
 
 #Stich image code
 
-if($width -eq 0){$width = 32}
-if($height -eq 0){$height = 32}  
+#if($width -eq 0){$width = 32 #should be unneeded
+#Write-host "Width ZERO!"}
+#if($height -eq 0){$height = 32}  
 
-[int]$PictureboxX = $tilecount * 32 #$width
-[int]$PictureboxY = $rowcount * 32 #$height
+[int]$PictureboxX = $tilecount * 32 + $x_offset #$width
+[int]$PictureboxY = $rowcount * 32  + $y_offset #$height
 
-if($width -eq 32 -and $height -eq 64){$y = $y + 25 } #push long images up
+#if($width -eq 32 -and $height -eq 64){$y = $y + 25 } #push long images up
 
 IF($file){
 $CutRec  = [System.Drawing.Rectangle]::new($x,$y,$width,$height)

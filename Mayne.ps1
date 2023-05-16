@@ -995,12 +995,10 @@ show-map
 
 #todo
 
-#loading message / bar, maybe load gui then load everything else.
+#loading message / bar
 
 
-#Split palletes into sub types ter/furn/item
 #figure out a way to sort the types in the sidebar. 
-
 #change map to draw in three(two?) passes one for each type. also fill in ground under items.
 #maybe two passes...hmmm
 
@@ -1008,8 +1006,7 @@ show-map
 #search box
 #file menu / save / load / export / palletes?
 
-#monster placements?
-
+#monster / trap placements?
 
 #done
 #clean up / remove URL stuff and tileset.csv stuff.
@@ -1017,3 +1014,4 @@ show-map
 #filemenu needs renanmed and functions made
 #map  choice.
 #fix slowdown with map after side-bar runs.
+#Split palletes into sub types ter/furn/item

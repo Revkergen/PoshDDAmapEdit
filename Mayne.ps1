@@ -3,8 +3,8 @@
 add-type -AssemblyName microsoft.VisualBasic
 Add-Type -AssemblyName System.Windows.Forms
 $script:MapLoaded = $false
-$Mapchanges = New-Object 'object[,]' 32,32
-$script:mapnumber = 0  
+$MapChanges = New-Object 'object[,]' 32,32
+$script:MapNumber = 0  
 #Find the root path of the script
 $PathToScript = Switch ($Host.name){
   'Visual Studio Code Host' { split-path $psEditor.GetEditorContext().CurrentFile.Path }
@@ -17,10 +17,10 @@ $i = "$PathToScript\ultimate\tile_config.json"
 $data = Get-Content -raw -path $i -Encoding UTF8
 $TileConfigJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
 
-Function TerrainParse($PalleteIN){
+Function TerrainParse($PaletteIn){
   $OutPalette = @()
   
-  foreach ($collection in $PalleteIN.terrain.getenumerator())  {
+  foreach ($collection in $PaletteIn.terrain.getenumerator())  {
   #$collection.GetType()
   
   if($collection.GetType().name -eq 'Dictionary`2' ){
@@ -72,10 +72,10 @@ Function TerrainParse($PalleteIN){
   Return $OutPalette
   }
 
-  Function FurnitureParse($PalleteIN){
+  Function FurnitureParse($PaletteIn){
     $OutPalette = @()
     
-    foreach ($collection in $PalleteIN.furniture.getenumerator())  {
+    foreach ($collection in $PaletteIn.furniture.getenumerator())  {
     #$collection.GetType()
     
     if($collection.GetType().name -eq 'Dictionary`2' ){
@@ -129,7 +129,7 @@ Function TerrainParse($PalleteIN){
     Return $OutPalette
     }
 
-Function lookslike(){
+Function LooksLike(){
   $list=@()
   $dir = Get-ChildItem $PathToScript\furniture_and_terrain\ | %{$_.fullname}
   foreach($i in $dir){
@@ -149,11 +149,11 @@ return $list
 }
 
 
-Function load-palette($mapnumber){
+Function load-palette($MapNumber){
 
 #find a pallete
 
-if( $null -ne $MapJson.object[$mapnumber].palettes ){ 
+if( $null -ne $MapJson.object[$MapNumber].palettes ){ 
 
     $dir = Get-ChildItem $PathToScript\Palettes\ | %{$_.fullname}
     $found = 0
@@ -162,14 +162,14 @@ if( $null -ne $MapJson.object[$mapnumber].palettes ){
     write-host $i
     if($found -ne 1){
     $data = Get-Content -raw -path $i -Encoding UTF8
-    $palletejson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
+    $PaletteJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data)
 
-    if($palletejson.id -eq $MapJson.object[$mapnumber].palettes[0]){write-host "Found matching pallete at $i"
+    if($PaletteJson.id -eq $MapJson.object[$MapNumber].palettes[0]){write-host "Found matching pallette at $i"
     $found = 1
     
     }}}
 #setup pallette
-$Custompalette=@()
+$CustomPalette=@()
 
 #some maps use fill_ter rather than define an area.... add this first as a work around. 
 if ($MapJson.object.fill_ter[0]){
@@ -188,24 +188,24 @@ if ($MapJson.object.fill_ter[0]){
               ZLayer = $null  
 
       }
-      $Custompalette += $tempPalette
+      $CustomPalette += $tempPalette
   }
 
 #pallette terrain 
-$Custompalette += TerrainParse $palletejson
+$CustomPalette += TerrainParse $PaletteJson
 
 #map terrain 
-$Custompalette += TerrainParse $MapJson.object[$mapnumber]
+$CustomPalette += TerrainParse $MapJson.object[$MapNumber]
 
 #pallette furniture 
-$Custompalette += FurnitureParse $palletejson
+$CustomPalette += FurnitureParse $PaletteJson
 
 #map terrain 
-$Custompalette += FurnitureParse $MapJson.object[$mapnumber]
+$CustomPalette += FurnitureParse $MapJson.object[$MapNumber]
 }
 else{
-  $Custompalette += TerrainParse $MapJson.object[$mapnumber]
-  $Custompalette += FurnitureParse $MapJson.object[$mapnumber]
+  $CustomPalette += TerrainParse $MapJson.object[$MapNumber]
+  $CustomPalette += FurnitureParse $MapJson.object[$MapNumber]
 }
 
 #region palette.......... not a real palette, replace t_region with an real image.
@@ -215,18 +215,18 @@ $data = Get-Content -raw -path $file -Encoding UTF8
 $RMSjson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
 
 #region terrain
-$loops = $Custompalette.count
+$loops = $CustomPalette.count
 foreach ($row in $RMSjson.region_terrain_and_furniture.terrain.getenumerator())  {
 $image = [system.String]::Join(" ", $row.Value)  -match "(?<image>t_\w+)" |   Foreach { $Matches.image }
 
 for ($loop = 0; $loop -le $loops - 1; $loop++) {
 
-IF($row.key -eq $custompalette[$loop].image){$custompalette[$loop].image =$image}
+IF($row.key -eq $CustomPalette[$loop].image){$CustomPalette[$loop].image =$image}
 
 #fix for outliers maybe make this into its own real entry?
 
-IF("t_railing_v" -eq $custompalette[$loop].image){$custompalette[$loop].image = "t_railing"}
-IF("t_floor_noroof" -eq $custompalette[$loop].image){$custompalette[$loop].image = "t_floor"}
+IF("t_railing_v" -eq $CustomPalette[$loop].image){$CustomPalette[$loop].image = "t_railing"}
+IF("t_floor_noroof" -eq $CustomPalette[$loop].image){$CustomPalette[$loop].image = "t_floor"}
 
 }
 }
@@ -234,17 +234,17 @@ IF("t_floor_noroof" -eq $custompalette[$loop].image){$custompalette[$loop].image
 foreach ($row in $RMSjson.region_terrain_and_furniture.furniture.getenumerator())  {
 $image = [system.String]::Join(" ", $row.Value)  -match "(?<image>f_\w+)" |   Foreach { $Matches.image }
 for ($loop = 0; $loop -le $loops - 1; $loop++) {
-IF($row.key -eq $custompalette[$loop].image){$custompalette[$loop].image =$image}
-IF("f_coffee_table" -eq $custompalette[$loop].image){$custompalette[$loop].image = "f_table"}
+IF($row.key -eq $CustomPalette[$loop].image){$CustomPalette[$loop].image =$image}
+IF("f_coffee_table" -eq $CustomPalette[$loop].image){$CustomPalette[$loop].image = "f_table"}
 }
 }
 
-$lookslike = lookslike
+$LooksLike = lookslike
 
 #foreach ($row in $lookslike)  {
 #  for ($loop = 0; $loop -le $loops - 1; $loop++) {
 #  
-#    IF($row.id -eq $custompalette[$loop].image){$custompalette[$loop].image =$row.image
+#    IF($row.id -eq $CustomPalette[$loop].image){$CustomPalette[$loop].image =$row.image
 #    write-host "Got one" $row.id " " $row.image
 #    }
 #  
@@ -252,28 +252,28 @@ $lookslike = lookslike
 #}
 
 
-$sorcerows = $Custompalette.count
+$sorcerows = $CustomPalette.count
 
 for ($loop = 0; $loop -le $sorcerows - 1; $loop++){
 
 foreach($item in $imagesorce){
 
-if($Custompalette[$loop].image -eq $item.image){
+if($CustomPalette[$loop].image -eq $item.image){
 
-$custompalette[$loop].width      = $item.width
-$custompalette[$loop].height     = $item.height
-$custompalette[$loop].file       = $item.file
-$custompalette[$loop].x          = $item.x
-$custompalette[$loop].y          = $item.y
-$custompalette[$loop].'X_offset' = $item.'X_offset'
-$custompalette[$loop].'Y_offset' = $item.'Y_offset'
-$custompalette[$loop].ZLayer     = $item.ZLayer  
+$CustomPalette[$loop].width      = $item.width
+$CustomPalette[$loop].height     = $item.height
+$CustomPalette[$loop].file       = $item.file
+$CustomPalette[$loop].x          = $item.x
+$CustomPalette[$loop].y          = $item.y
+$CustomPalette[$loop].'X_offset' = $item.'X_offset'
+$CustomPalette[$loop].'Y_offset' = $item.'Y_offset'
+$CustomPalette[$loop].ZLayer     = $item.ZLayer  
 }
 }
-If(!$custompalette[$loop].file){write-host "Missing image  " $Custompalette[$loop].image
+If(!$CustomPalette[$loop].file){write-host "Missing image  " $CustomPalette[$loop].image
 $found = 0
 foreach ($row in $lookslike)  {
-  IF($row.id -eq $custompalette[$loop].image){$custompalette[$loop].image =$row.image
+  IF($row.id -eq $CustomPalette[$loop].image){$CustomPalette[$loop].image =$row.image
     write-host "Got one" "id" $row.id " " "image" $row.image
   $found = 1  
   }
@@ -281,21 +281,21 @@ foreach ($row in $lookslike)  {
   if($found -eq 1){
   foreach($item in $imagesorce){
 
-    if($Custompalette[$loop].image -eq $item.image){
+    if($CustomPalette[$loop].image -eq $item.image){
     
-    $custompalette[$loop].width      = $item.width
-    $custompalette[$loop].height     = $item.height
-    $custompalette[$loop].file       = $item.file
-    $custompalette[$loop].x          = $item.x
-    $custompalette[$loop].y          = $item.y
-    $custompalette[$loop].'X_offset' = $item.'X_offset'
-    $custompalette[$loop].'Y_offset' = $item.'Y_offset'
-    $custompalette[$loop].ZLayer     = $item.ZLayer  
+    $CustomPalette[$loop].width      = $item.width
+    $CustomPalette[$loop].height     = $item.height
+    $CustomPalette[$loop].file       = $item.file
+    $CustomPalette[$loop].x          = $item.x
+    $CustomPalette[$loop].y          = $item.y
+    $CustomPalette[$loop].'X_offset' = $item.'X_offset'
+    $CustomPalette[$loop].'Y_offset' = $item.'Y_offset'
+    $CustomPalette[$loop].ZLayer     = $item.ZLayer  
     }
     }}
 }
 }
-Return $Custompalette
+Return $CustomPalette
 }
 
 
@@ -378,7 +378,7 @@ if ($tile -ceq $item.key){
   
   if($null -eq $file){
   #Write-host "cache miss"
-  foreach ($item in $Custompalette ){
+  foreach ($item in $CustomPalette ){
       
       if ($tile -ceq $item.key){
       #Write-host "found" $item
@@ -422,11 +422,11 @@ Write-host "Done"
 
 function get-sidebar(){
 
-  for ($loop = 0; $loop -le $Custompalette.count - 1; $loop++){
+  for ($loop = 0; $loop -le $CustomPalette.count - 1; $loop++){
 
-    if($Custompalette[$loop].file){
-    $CutRec2  = [System.Drawing.Rectangle]::new($Custompalette[$loop].x,$Custompalette[$loop].y,$Custompalette[$loop].width,$Custompalette[$loop].height)
-    $filename2 = "tempvarname" + [io.path]::GetFileNameWithoutExtension($Custompalette[$loop].file)
+    if($CustomPalette[$loop].file){
+    $CutRec2  = [System.Drawing.Rectangle]::new($CustomPalette[$loop].x,$CustomPalette[$loop].y,$CustomPalette[$loop].width,$CustomPalette[$loop].height)
+    $filename2 = "tempvarname" + [io.path]::GetFileNameWithoutExtension($CustomPalette[$loop].file)
     }
     else{
     $filename2 = "tempvarname" + [io.path]::GetFileNameWithoutExtension("error")
@@ -434,7 +434,7 @@ function get-sidebar(){
     }
     $baseimage2 = (Get-Variable -Scope "Script" -Name "$filename2").Value
     $cutimage2 = $baseimage2.Clone($cutrec2,$baseimage2.PixelFormat)
-    [void]$script:dataGrid.Rows.Add($cutimage2,$Custompalette[$loop].image,$Custompalette[$loop].key,$Custompalette[$loop].'x_offset',$Custompalette[$loop].'y_offset')
+    [void]$script:dataGrid.Rows.Add($cutimage2,$CustomPalette[$loop].image,$CustomPalette[$loop].key,$CustomPalette[$loop].'x_offset',$CustomPalette[$loop].'y_offset')
     #[void]$cutimage2.dispose() 
   
   }
@@ -532,7 +532,7 @@ $menuOpen.Add_Click({load-mapfile "ask"})
 
 $menuSave.ShortcutKeys = "F2"
 $menuSave.Text         = "&Save"
-$menuSave.Add_Click({Save-map $script:mapnumber})
+$menuSave.Add_Click({Save-map $script:MapNumber})
 [void]$menuFile.DropDownItems.Add($menuSave)
 
 $menuExit.ShortcutKeys = "Control, X"
@@ -616,7 +616,7 @@ $menuAbout.Add_Click({About})
   
   }
 
-function get-map($mapnumber){
+function get-map($MapNumber){
 #preload images.
 $dir = Get-ChildItem "$PathToScript\Ultimate" -Filter *.png | %{$_.fullname}  
 foreach($i in $dir){
@@ -636,9 +636,9 @@ New-Variable -name "$filename" -Scope "Script" -Value ([System.Drawing.Bitmap]::
 #(Get-Variable).Name | write-host
 $gfxcache=@()
 $rowcount = 0 - 1
-[int]$IamgeY = $MapJson.object[$mapnumber].rows.count * 32
+[int]$IamgeY = $MapJson.object[$MapNumber].rows.count * 32
 $MAPimage = [System.Drawing.Bitmap]::new(768,$IamgeY) 
-foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the first map.
+foreach($row in $MapJson.object[$MapNumber].rows){ #object[0] only runs the first map.
   write-host $row  # 100 ms faster without this 
   $rowcount++
   $tilecount = 0 - 1
@@ -668,7 +668,7 @@ foreach($row in $MapJson.object[$mapnumber].rows){ #object[0] only runs the firs
     
     if($null -eq $file){
     #Write-host "cache miss"
-    foreach ($item in $Custompalette ){
+    foreach ($item in $CustomPalette ){
         
         if ($tile -ceq $item.key){
         #Write-host "found" $item
@@ -717,12 +717,12 @@ $MAPimage.save("$PathToScript\MapExport.png")
 return $MAPimage
 }
 
-Function load-mapfile($mapnumber){
-  write-host "loading map number "$mapnumber
+Function load-mapfile($MapNumber){
+  write-host "loading map number "$MapNumber
   #clean up old map if loaded.
 if($MapLoaded){Get-Variable | where-object -Property name -like 'tempvarname*' | Remove-Variable -Scope "Script"}
 
-  if($mapnumber -eq "ask"){
+  if($MapNumber -eq "ask"){
   $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog
   $FileBrowser.InitialDirectory = [Environment]::GetFolderPath('Desktop')
   $FileBrowser.Filter = 'Mapfiles (*.json) | *.json'
@@ -732,8 +732,8 @@ if($MapLoaded){Get-Variable | where-object -Property name -like 'tempvarname*' |
   Write-host $FileBrowser.FileName
   $script:loadedmap = $FileBrowser.FileName
   if(!$FileBrowser.FileName){return}
-  $script:mapnumber = 0  
-  $mapnumber = 0
+  $script:MapNumber = 0  
+  $MapNumber = 0
   }
   
   #if($FileBrowser.FileName){
@@ -742,8 +742,8 @@ if($MapLoaded){Get-Variable | where-object -Property name -like 'tempvarname*' |
   $script:MapJson = (New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer -Property @{MaxJsonLength=67108864}).DeserializeObject($data) 
   $script:MapLoaded = $true
   
-  $script:Custompalette = load-palette $mapnumber
-  $script:MAPimage = get-map $mapnumber
+  $script:CustomPalette = load-palette $MapNumber
+  $script:MAPimage = get-map $MapNumber
   get-sidebar 
 
   #show-map
@@ -761,7 +761,7 @@ if($MapLoaded){Get-Variable | where-object -Property name -like 'tempvarname*' |
     $tempItem.Add_Click({
     write-host $this $this.tag 
     load-mapfile $this.tag
-    $script:mapnumber = $this.tag})
+    $script:MapNumber = $this.tag})
     $menuMaps.DropDownItems.Add($tempItem)
     $loop++
     }
@@ -771,7 +771,7 @@ if($MapLoaded){Get-Variable | where-object -Property name -like 'tempvarname*' |
     $tempItem.Add_Click({
     write-host $this $this.tag 
     load-mapfile $this.tag
-    $script:mapnumber = $this.tag})
+    $script:MapNumber = $this.tag})
     $menuMaps.DropDownItems.Add($tempItem)
     $loop++
     }
@@ -779,9 +779,9 @@ if($MapLoaded){Get-Variable | where-object -Property name -like 'tempvarname*' |
   }
 }
 
-Function save-map($mapnumber){
-Write-host $mapnumber
-  #$mapnumber = 0
+Function save-map($MapNumber){
+Write-host $MapNumber
+  #$MapNumber = 0
   if($MapLoaded){
   $FileBrowser = New-Object System.Windows.Forms.SaveFileDialog
   $FileBrowser.InitialDirectory = [Environment]::GetFolderPath('Desktop')
@@ -794,7 +794,7 @@ Write-host $mapnumber
     Write-host $FileBrowser.FileName
 
     $rowcount = 0
-    foreach($row in $MapJson.object[$mapnumber].rows){ 
+    foreach($row in $MapJson.object[$MapNumber].rows){ 
       #write-host $row
       $tilecount = 0
       [string]$newrow = $null
@@ -804,7 +804,7 @@ Write-host $mapnumber
         else{$newrow = $newrow + $tile}
         $tilecount++
       }
-      $MapJson.object[$mapnumber].rows[$rowcount] = $newrow
+      $MapJson.object[$MapNumber].rows[$rowcount] = $newrow
       $rowcount++
     }
 
